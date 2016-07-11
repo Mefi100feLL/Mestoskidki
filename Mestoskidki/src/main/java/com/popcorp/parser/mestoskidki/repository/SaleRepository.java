@@ -218,7 +218,8 @@ public class SaleRepository implements DataRepository<Sale> {
         SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + uslovie + ";");
         while (rowSet.next()) {
             Sale sale = getSale(rowSet);
-            sale.setComments(saleCommentRepository.getForSale(sale));
+            sale.setCountComments(saleCommentRepository.getCountForSaleId(sale.getId()));
+            //sale.setComments(saleCommentRepository.getForSale(sale));
             sale.setSameSales(saleSameRepository.getForSale(sale));
             result.add(sale);
         }

@@ -17,6 +17,7 @@ public class Sale implements DomainObject{
     private int shopId;
     private int categoryId;
     private int categoryType;
+    private int countComments;
 
     private Iterable<SaleComment> comments;
     private Iterable<SaleSame> sameSales;
@@ -162,5 +163,13 @@ public class Sale implements DomainObject{
 
     public void setSameSales(Iterable<SaleSame> sameSales) {
         this.sameSales = sameSales;
+    }
+
+    public int getCountComments() {
+        return countComments;
+    }
+
+    public void setCountComments(int countComments) {
+        this.countComments = countComments;
     }
 }

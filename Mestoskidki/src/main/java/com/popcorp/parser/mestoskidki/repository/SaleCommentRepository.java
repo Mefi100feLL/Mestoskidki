@@ -98,6 +98,15 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
         return result;
     }
 
+    public Iterable<SaleComment> getForSaleId(int saleId) {
+        ArrayList<SaleComment> result = new ArrayList<>();
+        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES_COMMENTS + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + ";");
+        while (rowSet.next()) {
+            result.add(getSaleComment(rowSet));
+        }
+        return result;
+    }
+
     public void removeForSale(int saleId) {
         jdbcOperations.update("DELETE FROM " + TABLE_SALES_COMMENTS + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + ";");
     }
@@ -111,5 +120,13 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
                 rowSet.getString(COLUMNS_TIME),
                 rowSet.getString(COLUMNS_TEXT),
                 rowSet.getLong(COLUMNS_DATE_TIME));
+    }
+
+    public int getCountForSaleId(int saleId) {
+        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT COUNT(*) FROM " + TABLE_SALES_COMMENTS + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + " AS count;");
+        if (rowSet.next()){
+            return rowSet.getInt("count");
+        }
+        return 0;
     }
 }

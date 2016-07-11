@@ -84,6 +84,11 @@ public class RestController {
         return result;
     }
 
+    @RequestMapping("/comments")
+    public Iterable<SaleComment> getComments(@RequestParam(value = "sale", defaultValue = "1") int saleId) {
+        return saleCommentRepository.getForSaleId(saleId);
+    }
+
     @RequestMapping("/comments/new")
     public Result sendComment(
             @RequestParam(value = "author", defaultValue = "") String author,
