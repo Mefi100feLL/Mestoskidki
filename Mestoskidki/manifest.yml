@@ -1,0 +1,8 @@
+---
+applications:
+- name: mestoskidki
+  memory: 256M
+  instances: 1
+  host: mestoskidki
+  domain: guides.spring.io
+  path: build/libs/gs-rest-service-0.1.0.jar
