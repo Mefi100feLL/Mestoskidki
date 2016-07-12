@@ -123,7 +123,7 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
     }
 
     public int getCountForSaleId(int saleId) {
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT COUNT(*) FROM " + TABLE_SALES_COMMENTS + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + " AS count;");
+        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT COUNT(*) AS count FROM " + TABLE_SALES_COMMENTS + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + ";");
         if (rowSet.next()){
             return rowSet.getInt("count");
         }
