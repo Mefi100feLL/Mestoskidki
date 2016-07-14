@@ -220,9 +220,6 @@ public class SaleRepository implements DataRepository<Sale> {
             SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + uslovie + ";");
             while (rowSet.next()) {
                 Sale sale = getSale(rowSet);
-                sale.setCountComments(saleCommentRepository.getCountForSaleId(sale.getId()));
-                //sale.setComments(saleCommentRepository.getForSale(sale));
-                sale.setSameSales(saleSameRepository.getForSale(sale));
                 result.add(sale);
             }
         } catch (Exception e){
@@ -234,7 +231,7 @@ public class SaleRepository implements DataRepository<Sale> {
     }
 
     private Sale getSale(SqlRowSet rowSet) {
-        return new Sale(
+        Sale result =  new Sale(
                 rowSet.getInt(COLUMNS_ID),
                 rowSet.getString(COLUMNS_TITLE),
                 rowSet.getString(COLUMNS_SUB_TITLE),
@@ -248,6 +245,11 @@ public class SaleRepository implements DataRepository<Sale> {
                 rowSet.getInt(COLUMNS_SHOP_ID),
                 rowSet.getInt(COLUMNS_CATEGORY_ID),
                 rowSet.getInt(COLUMNS_CATEGORY_TYPE));
+
+        result.setCountComments(saleCommentRepository.getCountForSaleId(result.getId()));
+        //sale.setComments(saleCommentRepository.getForSale(sale));
+        result.setSameSales(saleSameRepository.getForSale(result));
+        return result;
     }
 
     public Sale getWithId(int city, int id) {
@@ -256,8 +258,6 @@ public class SaleRepository implements DataRepository<Sale> {
             SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + " WHERE " + COLUMNS_CITY_ID + "=" + city + " AND " + COLUMNS_ID + "=" + id + ";");
             if (rowSet.next()) {
                 result = getSale(rowSet);
-                //result.setComments(saleCommentRepository.getForSale(result));
-                result.setSameSales(saleSameRepository.getForSale(result));
             }
         } catch (Exception e){
             ErrorManager.sendError(e.getMessage());
@@ -267,7 +267,7 @@ public class SaleRepository implements DataRepository<Sale> {
         return result;
     }
 
-    public Iterable<Sale> getAllForCityWithoutCommentsAndSames(int cityId) {
+    public Iterable<Sale> getAllForCity(int cityId) {
         ArrayList<Sale> result = new ArrayList<>();
         SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + " WHERE " + COLUMNS_CITY_ID + "=" + cityId + ";");
         while (rowSet.next()) {

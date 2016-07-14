@@ -27,7 +27,7 @@ public class SalesCleaner {
             for (City city : cityRepository.getAll()) {
                 Calendar cityTime = Calendar.getInstance();
                 cityTime.add(Calendar.HOUR_OF_DAY, city.getTimeZone());
-                for (Sale sale : saleRepository.getAllForCityWithoutCommentsAndSames(city.getId())) {
+                for (Sale sale : saleRepository.getAllForCity(city.getId())) {
                     Calendar saleTime = Calendar.getInstance();
                     try {
                         saleTime.setTime(format.parse(sale.getPeriodEnd()));
