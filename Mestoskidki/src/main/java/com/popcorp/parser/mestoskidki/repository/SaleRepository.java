@@ -3,6 +3,7 @@ package com.popcorp.parser.mestoskidki.repository;
 import com.popcorp.parser.mestoskidki.entity.Sale;
 import com.popcorp.parser.mestoskidki.entity.SaleComment;
 import com.popcorp.parser.mestoskidki.entity.SaleSame;
+import com.popcorp.parser.mestoskidki.util.ErrorManager;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -191,37 +192,43 @@ public class SaleRepository implements DataRepository<Sale> {
 
     public Iterable<Sale> getForShopAndCategories(int cityId, String shops, String categs, String categsTypes) {
         ArrayList<Sale> result = new ArrayList<>();
-        String uslovie = " WHERE " + COLUMNS_CITY_ID + "=" + cityId;
-        if (shops.isEmpty()) {
-            return result;
-        } else {
-            uslovie += " AND " + COLUMNS_SHOP_ID + " = ANY(ARRAY" + shops + ")";
-        }
-        if (categs.isEmpty()) {
-            return result;
-        } else {
-            JSONArray jsonCategs = new JSONArray(categs);
-            JSONArray jsonCategsTypes = new JSONArray(categsTypes);
-            if (jsonCategs.length() > 0) {
-                uslovie += " AND (";
-                for (int i = 0; i < jsonCategs.length(); i++) {
-                    if (i > 0) {
-                        uslovie += " OR ";
-                    }
-                    int category = jsonCategs.getInt(i);
-                    int type = jsonCategsTypes.getInt(i);
-                    uslovie += "(" + COLUMNS_CATEGORY_ID + "=" + category + " AND " + COLUMNS_CATEGORY_TYPE + "=" + type + ")";
-                }
-                uslovie += ")";
+        try {
+            String uslovie = " WHERE " + COLUMNS_CITY_ID + "=" + cityId;
+            if (shops.isEmpty()) {
+                return result;
+            } else {
+                uslovie += " AND " + COLUMNS_SHOP_ID + " = ANY(ARRAY" + shops + ")";
             }
-        }
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + uslovie + ";");
-        while (rowSet.next()) {
-            Sale sale = getSale(rowSet);
-            sale.setCountComments(saleCommentRepository.getCountForSaleId(sale.getId()));
-            //sale.setComments(saleCommentRepository.getForSale(sale));
-            sale.setSameSales(saleSameRepository.getForSale(sale));
-            result.add(sale);
+            if (categs.isEmpty()) {
+                return result;
+            } else {
+                JSONArray jsonCategs = new JSONArray(categs);
+                JSONArray jsonCategsTypes = new JSONArray(categsTypes);
+                if (jsonCategs.length() > 0) {
+                    uslovie += " AND (";
+                    for (int i = 0; i < jsonCategs.length(); i++) {
+                        if (i > 0) {
+                            uslovie += " OR ";
+                        }
+                        int category = jsonCategs.getInt(i);
+                        int type = jsonCategsTypes.getInt(i);
+                        uslovie += "(" + COLUMNS_CATEGORY_ID + "=" + category + " AND " + COLUMNS_CATEGORY_TYPE + "=" + type + ")";
+                    }
+                    uslovie += ")";
+                }
+            }
+            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + uslovie + ";");
+            while (rowSet.next()) {
+                Sale sale = getSale(rowSet);
+                sale.setCountComments(saleCommentRepository.getCountForSaleId(sale.getId()));
+                //sale.setComments(saleCommentRepository.getForSale(sale));
+                sale.setSameSales(saleSameRepository.getForSale(sale));
+                result.add(sale);
+            }
+        } catch (Exception e){
+            ErrorManager.sendError(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
         return result;
     }
@@ -245,11 +252,17 @@ public class SaleRepository implements DataRepository<Sale> {
 
     public Sale getWithId(int city, int id) {
         Sale result = null;
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + " WHERE " + COLUMNS_CITY_ID + "=" + city + " AND " + COLUMNS_ID + "=" + id + ";");
-        if (rowSet.next()) {
-            result = getSale(rowSet);
-            //result.setComments(saleCommentRepository.getForSale(result));
-            result.setSameSales(saleSameRepository.getForSale(result));
+        try {
+            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + " WHERE " + COLUMNS_CITY_ID + "=" + city + " AND " + COLUMNS_ID + "=" + id + ";");
+            if (rowSet.next()) {
+                result = getSale(rowSet);
+                //result.setComments(saleCommentRepository.getForSale(result));
+                result.setSameSales(saleSameRepository.getForSale(result));
+            }
+        } catch (Exception e){
+            ErrorManager.sendError(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
         return result;
     }

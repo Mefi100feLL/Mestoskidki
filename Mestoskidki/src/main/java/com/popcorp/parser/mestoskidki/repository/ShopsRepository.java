@@ -1,6 +1,7 @@
 package com.popcorp.parser.mestoskidki.repository;
 
 import com.popcorp.parser.mestoskidki.entity.Shop;
+import com.popcorp.parser.mestoskidki.util.ErrorManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -82,15 +83,21 @@ public class ShopsRepository implements DataRepository<Shop> {
 
     public Iterable<Shop> getForCity(int cityId) {
         ArrayList<Shop> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SHOPS + " WHERE " + COLUMNS_CITY_ID + "=" + cityId + ";");
-        while (rowSet.next()) {
-            Shop shop = new Shop(
-                    rowSet.getInt(COLUMNS_ID),
-                    rowSet.getString(COLUMNS_NAME),
-                    rowSet.getString(COLUMNS_IMAGE),
-                    rowSet.getInt(COLUMNS_COUNT_SALES),
-                    rowSet.getInt(COLUMNS_CITY_ID));
-            result.add(shop);
+        try {
+            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SHOPS + " WHERE " + COLUMNS_CITY_ID + "=" + cityId + ";");
+            while (rowSet.next()) {
+                Shop shop = new Shop(
+                        rowSet.getInt(COLUMNS_ID),
+                        rowSet.getString(COLUMNS_NAME),
+                        rowSet.getString(COLUMNS_IMAGE),
+                        rowSet.getInt(COLUMNS_COUNT_SALES),
+                        rowSet.getInt(COLUMNS_CITY_ID));
+                result.add(shop);
+            }
+        } catch (Exception e){
+            ErrorManager.sendError(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
         return result;
     }

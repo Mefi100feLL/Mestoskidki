@@ -2,6 +2,7 @@ package com.popcorp.parser.mestoskidki.repository;
 
 import com.popcorp.parser.mestoskidki.entity.Sale;
 import com.popcorp.parser.mestoskidki.entity.SaleComment;
+import com.popcorp.parser.mestoskidki.util.ErrorManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -100,9 +101,15 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
 
     public Iterable<SaleComment> getForSaleId(int saleId) {
         ArrayList<SaleComment> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES_COMMENTS + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + ";");
-        while (rowSet.next()) {
-            result.add(getSaleComment(rowSet));
+        try {
+            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES_COMMENTS + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + ";");
+            while (rowSet.next()) {
+                result.add(getSaleComment(rowSet));
+            }
+        } catch (Exception e){
+            ErrorManager.sendError(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
         return result;
     }

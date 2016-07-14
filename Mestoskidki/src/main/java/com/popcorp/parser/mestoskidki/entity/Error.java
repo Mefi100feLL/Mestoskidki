@@ -6,10 +6,12 @@ public class Error implements DomainObject {
 
     private String subject;
     private String body;
+    private String datetime;
 
-    public Error(String subject, String body) {
+    public Error(String subject, String body, String datetime) {
         this.subject = subject;
         this.body = body;
+        this.datetime = datetime;
     }
 
     @Override
@@ -33,5 +35,13 @@ public class Error implements DomainObject {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public String getDatetime() {
+        return datetime;
+    }
+
+    public void setDatetime(String datetime) {
+        this.datetime = datetime;
     }
 }

@@ -61,10 +61,16 @@ public class CityRepository implements DataRepository<City> {
     @Override
     public Iterable<City> getAll() {
         ArrayList<City> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_CITIES + ";");
-        while (rowSet.next()) {
-            City city = new City(rowSet.getInt(COLUMNS_ID), rowSet.getString(COLUMNS_NAME), rowSet.getString(COLUMNS_URL), rowSet.getInt(COLUMNS_TIME_ZONE));
-            result.add(city);
+        try {
+            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_CITIES + ";");
+            while (rowSet.next()) {
+                City city = new City(rowSet.getInt(COLUMNS_ID), rowSet.getString(COLUMNS_NAME), rowSet.getString(COLUMNS_URL), rowSet.getInt(COLUMNS_TIME_ZONE));
+                result.add(city);
+            }
+        } catch (Exception e){
+            ErrorManager.sendError(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
         return result;
     }

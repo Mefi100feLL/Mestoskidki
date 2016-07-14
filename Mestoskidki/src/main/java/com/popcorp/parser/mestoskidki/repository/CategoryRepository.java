@@ -1,6 +1,7 @@
 package com.popcorp.parser.mestoskidki.repository;
 
 import com.popcorp.parser.mestoskidki.entity.Category;
+import com.popcorp.parser.mestoskidki.util.ErrorManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -58,10 +59,16 @@ public class CategoryRepository implements DataRepository<Category> {
     @Override
     public Iterable<Category> getAll() {
         ArrayList<Category> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_CATEGORIES + ";");
-        while (rowSet.next()) {
-            Category category = new Category(rowSet.getInt(COLUMNS_ID), rowSet.getInt(COLUMNS_TYPE), rowSet.getString(COLUMNS_NAME), rowSet.getString(COLUMNS_IMAGE));
-            result.add(category);
+        try {
+            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_CATEGORIES + ";");
+            while (rowSet.next()) {
+                Category category = new Category(rowSet.getInt(COLUMNS_ID), rowSet.getInt(COLUMNS_TYPE), rowSet.getString(COLUMNS_NAME), rowSet.getString(COLUMNS_IMAGE));
+                result.add(category);
+            }
+        } catch (Exception e){
+            ErrorManager.sendError(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
         return result;
     }

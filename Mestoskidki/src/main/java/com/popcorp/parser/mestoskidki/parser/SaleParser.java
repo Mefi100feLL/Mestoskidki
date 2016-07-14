@@ -30,19 +30,19 @@ public class SaleParser {
                         } catch (IOException e) {
                             e.printStackTrace();
                             ErrorManager.sendError("Mestoskidki: Page with sale not loaded! Id: " + saleId + ", cityId: " + cityId + ", error: " + e.getMessage());
-                            return Observable.empty();
+                            return Observable.just(null);
                         }
                         String title = getTitle(page);
                         if (title == null) {
                             ErrorManager.sendError("Mestoskidki: Title for sale not finded! Id: " + saleId + ", cityId: " + cityId);
-                            return Observable.empty();
+                            return Observable.just(null);
                         }
                         String subTitle = getSubTitle(page);
 
                         String periodStart = getPeriodStart(page);
                         if (periodStart == null) {
                             ErrorManager.sendError("Mestoskidki: PeriodStart for sale not finded! Id: " + saleId + ", cityId: " + cityId);
-                            return Observable.empty();
+                            return Observable.just(null);
                         }
 
                         String periodEnd = getPeriodEnd(page);
@@ -59,13 +59,13 @@ public class SaleParser {
                         int shopId = getShopId(page);
                         if (shopId == -1) {
                             ErrorManager.sendError("Mestoskidki: Shop for sale not finded! Id: " + saleId + ", cityId: " + cityId);
-                            return Observable.empty();
+                            return Observable.just(null);
                         }
 
                         int categoryType = getCategoryType(page);
                         if (categoryType == -1) {
                             ErrorManager.sendError("Mestoskidki: CategoryType for sale not finded! Id: " + saleId + ", cityId: " + cityId);
-                            return Observable.empty();
+                            return Observable.just(null);
                         }
 
                         int categoryId = categoryInnerRepository.getCategoryForInner(getCategoryId(page), categoryType);
@@ -74,7 +74,7 @@ public class SaleParser {
                         String image = getImage(page);
                         if (image.isEmpty()) {
                             ErrorManager.sendError("Mestoskidki: Image for sale not finded! Id: " + saleId + ", cityId: " + cityId);
-                            return Observable.empty();
+                            return Observable.just(null);
                         }
 
                         Sale sale = new Sale(saleId, title, subTitle, periodStart, periodEnd, coast, quantity, coastForQuantity, image, cityId, shopId, categoryId, categoryType);
@@ -83,8 +83,9 @@ public class SaleParser {
                         return Observable.just(sale);
                     } catch (Exception e){
                         ErrorManager.sendError(e.getMessage());
+                        e.printStackTrace();
                     }
-                    return null;
+                    return Observable.just(null);
                 });
     }
 

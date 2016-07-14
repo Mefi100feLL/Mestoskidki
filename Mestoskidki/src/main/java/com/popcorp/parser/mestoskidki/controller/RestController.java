@@ -1,16 +1,14 @@
 package com.popcorp.parser.mestoskidki.controller;
 
+import com.popcorp.parser.mestoskidki.dto.UniversalDTO;
 import com.popcorp.parser.mestoskidki.entity.*;
-import com.popcorp.parser.mestoskidki.net.API;
+import com.popcorp.parser.mestoskidki.net.APIFactory;
 import com.popcorp.parser.mestoskidki.parser.SaleParser;
 import com.popcorp.parser.mestoskidki.repository.*;
-import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import rx.schedulers.Schedulers;
 
 import java.io.IOException;
@@ -47,57 +45,101 @@ public class RestController {
 
 
     @RequestMapping("/cities")
-    public Iterable<City> getCities() {
-        return cityRepository.getAll();
+    public UniversalDTO<Iterable<City>> getCities() {
+        UniversalDTO<Iterable<City>> result = new UniversalDTO<>(true, "Ошибка при поиске регионов", null);
+        Iterable<City> cities = cityRepository.getAll();
+        if (cities != null) {
+            result = new UniversalDTO<>(false, "", cities);
+        }
+        return result;
     }
 
     @RequestMapping("/categories")
-    public Iterable<Category> getCategories() {
-        return categoryRepository.getAll();
+    public UniversalDTO<Iterable<Category>> getCategories() {
+        UniversalDTO<Iterable<Category>> result = new UniversalDTO<>(true, "Ошибка при поиске категорий", null);
+        Iterable<Category> categories = categoryRepository.getAll();
+        if (categories != null) {
+            result = new UniversalDTO<>(false, "", categories);
+        }
+        return result;
     }
 
     @RequestMapping("/shops")
-    public Iterable<Shop> getShops(@RequestParam(value = "city", defaultValue = "1") int city) {
-        return shopRepository.getForCity(city);
+    public UniversalDTO<Iterable<Shop>> getShops(@RequestParam(value = "city", defaultValue = "-1") int city) {
+        if (city == -1) {
+            return new UniversalDTO<>(true, "Не указан регион", null);
+        }
+        UniversalDTO<Iterable<Shop>> result = new UniversalDTO<>(true, "Ошибка при поиске магазинов", null);
+        Iterable<Shop> shops = shopRepository.getForCity(city);
+        if (shops != null) {
+            result = new UniversalDTO<>(false, "", shops);
+        }
+        return result;
     }
 
     @RequestMapping("/sales")
-    public Iterable<Sale> getSales(
-            @RequestParam(value = "city", defaultValue = "1") int city,
+    public UniversalDTO<Iterable<Sale>> getSales(
+            @RequestParam(value = "city", defaultValue = "-1") int city,
             @RequestParam(value = "shops", defaultValue = "") String shops,
             @RequestParam(value = "categs", defaultValue = "") String categs,
             @RequestParam(value = "categs_types", defaultValue = "") String categsTypes) {
-        return saleRepository.getForShopAndCategories(city, shops, categs, categsTypes);
+        if (city == -1 || shops.isEmpty() || categs.isEmpty() || categsTypes.isEmpty()) {
+            return new UniversalDTO<>(true, "Неверные входные параметры", null);
+        }
+        UniversalDTO<Iterable<Sale>> result = new UniversalDTO<>(true, "Ошибка при поиске акций", null);
+        Iterable<Sale> sales = saleRepository.getForShopAndCategories(city, shops, categs, categsTypes);
+        if (sales != null) {
+            result = new UniversalDTO<>(false, "", sales);
+        }
+        return result;
     }
 
     @RequestMapping("/sale")
-    public Sale getSale(
+    public UniversalDTO<Sale> getSale(
             @RequestParam(value = "city", defaultValue = "-1") int city,
             @RequestParam(value = "id", defaultValue = "-1") int id) {
-        Sale result = null;
-        if (id != -1 && city != -1) {
-            result = saleRepository.getWithId(city, id);
-            if (result == null) {
-                return new SaleParser().getSale(city, id, categoryInnerRepository).subscribeOn(Schedulers.newThread()).toBlocking().first();
-            }
+        if (city == -1 || id == -1) {
+            return new UniversalDTO<>(true, "Неверные входные параметры", null);
+        }
+        UniversalDTO<Sale> result;
+        Sale sale = saleRepository.getWithId(city, id);
+        if (sale == null) {
+            sale = new SaleParser().getSale(city, id, categoryInnerRepository)
+                    .subscribeOn(Schedulers.io())
+                    .onErrorReturn(throwable -> null)
+                    .toBlocking()
+                    .first();
+        }
+        if (sale == null) {
+            result = new UniversalDTO<>(true, "Акция не найдена", null);
+        } else {
+            result = new UniversalDTO<>(false, "", sale);
         }
         return result;
     }
 
     @RequestMapping("/comments")
-    public Iterable<SaleComment> getComments(@RequestParam(value = "sale", defaultValue = "1") int saleId) {
-        return saleCommentRepository.getForSaleId(saleId);
+    public UniversalDTO<Iterable<SaleComment>> getComments(@RequestParam(value = "sale", defaultValue = "-1") int saleId) {
+        if (saleId == -1) {
+            return new UniversalDTO<>(true, "Неверные входные параметры", null);
+        }
+        UniversalDTO<Iterable<SaleComment>> result = new UniversalDTO<>(true, "Ошибка при поиске комментариев", null);
+        Iterable<SaleComment> comments = saleCommentRepository.getForSaleId(saleId);
+        if (comments != null) {
+            result = new UniversalDTO<>(false, "", comments);
+        }
+        return result;
     }
 
     @RequestMapping("/comments/new")
-    public Result sendComment(
+    public CommentResult sendComment(
             @RequestParam(value = "author", defaultValue = "") String author,
             @RequestParam(value = "whom", defaultValue = "") String whom,
             @RequestParam(value = "text", defaultValue = "") String text,
             @RequestParam(value = "city", defaultValue = "-1") int city,
             @RequestParam(value = "id", defaultValue = "-1") int id) {
         if (city == -1 || id == -1 || author.isEmpty() || text.isEmpty()) {
-            return new CommentResult(false, "Empty field", "", "", 0);
+            return new CommentResult(false, "Неверные входные параметры", "", "", 0);
         }
         Calendar currentDate = Calendar.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", new Locale("ru"));
@@ -106,13 +148,8 @@ public class RestController {
         String time = timeFormat.format(currentDate.getTime());
         long dateTime = currentDate.getTimeInMillis();
         SaleComment saleComment = new SaleComment(id, author, whom, date, time, text, dateTime);
-        Retrofit retrofit = new Retrofit.Builder()
-                .client(new OkHttpClient())
-                .baseUrl("http://mestoskidki.ru/")
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create()).build();
 
-        API api = retrofit.create(API.class);
-        return api.sendComment(author, whom, text, city, id, "", "4", "8", "Комментировать")
+        return APIFactory.getAPI().sendComment(author, whom, text, city, id, "", "4", "8", "Комментировать")
                 .map(responseBody -> {
                     String result;
                     try {
@@ -125,7 +162,10 @@ public class RestController {
                         saleCommentRepository.save(saleComment);
                         return new CommentResult(true, "", date, time, dateTime);
                     }
-                    return new CommentResult(false, "Any error", "", "", 0);
-                }).toBlocking().first();
+                    return new CommentResult(false, "Неизвестная ошибка", "", "", 0);
+                })
+                .onErrorReturn(throwable -> new CommentResult(false, throwable.getMessage(), "", "", 0))
+                .toBlocking()
+                .first();
     }
 }

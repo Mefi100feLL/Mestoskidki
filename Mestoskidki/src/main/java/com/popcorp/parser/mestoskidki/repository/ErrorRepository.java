@@ -15,8 +15,9 @@ public class ErrorRepository implements DataRepository<Error> {
 
     private static final String COLUMNS_BODY = "body";
     private static final String COLUMNS_SUBJECT = "subject";
+    private static final String COLUMNS_DATETIME = "datetime";
 
-    private static final String COLUMNS_ERRORS = "(" + COLUMNS_BODY + ", " + COLUMNS_SUBJECT + ")";
+    private static final String COLUMNS_ERRORS = "(" + COLUMNS_BODY + ", " + COLUMNS_SUBJECT + ", " + COLUMNS_DATETIME + ")";
 
     @Autowired
     protected JdbcOperations jdbcOperations;
@@ -27,8 +28,10 @@ public class ErrorRepository implements DataRepository<Error> {
         int[] types = new int[]{Types.VARCHAR, Types.VARCHAR};
 
         int result = 1;
-        if (!jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_ERRORS + " WHERE " + COLUMNS_BODY + "='" + object.getBody() + "' AND " + COLUMNS_SUBJECT + "='" + object.getSubject() + "';").next()) {
-            result = jdbcOperations.update("INSERT INTO " + TABLE_ERRORS + " " + COLUMNS_ERRORS + " VALUES (?, ?);", params, types);
+        try {
+            result = jdbcOperations.update("INSERT INTO " + TABLE_ERRORS + " " + COLUMNS_ERRORS + " VALUES (?, ?, ?);", params, types);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return result;
     }
@@ -52,7 +55,11 @@ public class ErrorRepository implements DataRepository<Error> {
         ArrayList<Error> result = new ArrayList<>();
         SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_ERRORS + ";");
         while (rowSet.next()) {
-            Error city = new Error(rowSet.getString(COLUMNS_SUBJECT), rowSet.getString(COLUMNS_BODY));
+            Error city = new Error(
+                    rowSet.getString(COLUMNS_SUBJECT),
+                    rowSet.getString(COLUMNS_BODY),
+                    rowSet.getString(COLUMNS_DATETIME)
+            );
             result.add(city);
         }
         return result;
