@@ -147,7 +147,7 @@ public class RestController {
         String date = dateFormat.format(currentDate.getTime());
         String time = timeFormat.format(currentDate.getTime());
         long dateTime = currentDate.getTimeInMillis();
-        SaleComment saleComment = new SaleComment(id, author, whom, date, time, text, dateTime);
+        SaleComment saleComment = new SaleComment(id, author, whom, text, dateTime);
 
         return APIFactory.getAPI().sendComment(author, whom, text, city, id, "", "4", "8", "Комментировать")
                 .map(responseBody -> {

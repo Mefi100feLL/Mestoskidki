@@ -39,14 +39,14 @@ public class SaleParser {
                         }
                         String subTitle = getSubTitle(page);
 
-                        String periodStart = getPeriodStart(page);
-                        if (periodStart == null) {
+                        long periodStart = getPeriodStart(page);
+                        if (periodStart == -1) {
                             ErrorManager.sendError("Mestoskidki: PeriodStart for sale not finded! Id: " + saleId + ", cityId: " + cityId);
                             return Observable.just(null);
                         }
 
-                        String periodEnd = getPeriodEnd(page);
-                        periodEnd = periodEnd == null ? periodStart : periodEnd;
+                        long periodEnd = getPeriodEnd(page);
+                        periodEnd = periodEnd == -1 ? periodStart : periodEnd;
 
                         String coast = getCoast(page);
                         if (coast.isEmpty()) {
@@ -216,7 +216,6 @@ public class SaleParser {
                 ErrorManager.sendError("Mestoskidki: SaleComment datetime for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", comment: " + commentResult);
                 continue;
             }
-            String[] dateTimeSplit = dateTime.split(" ");
             Date dt;
             try {
                 dt = format.parse(dateTime);
@@ -225,7 +224,7 @@ public class SaleParser {
                 ErrorManager.sendError("Mestoskidki: SaleComment datetime for sale parsing error! Id: " + saleId + ", cityId: " + cityId + ", comment: " + commentResult);
                 continue;
             }
-            SaleComment saleComment = new SaleComment(saleId, author, whom, dateTimeSplit[0], dateTimeSplit[1], text, dt.getTime());
+            SaleComment saleComment = new SaleComment(saleId, author, whom, text, dt.getTime());
             result.add(saleComment);
         }
         return result;
@@ -259,29 +258,39 @@ public class SaleParser {
         return text.replaceAll("<br( )?(/)?>", "");
     }
 
-    private String getPeriodStart(String page) {
-        String result = null;
+    private long getPeriodStart(String page) {
+        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy", new Locale("ru"));
+        long result = -1;
         Matcher periodsMatcher = Pattern.compile("<p class='view_sale_date22'>Период акции:<br><br>(<font color='red'>)?[.[^<]]*<").matcher(page);
         if (periodsMatcher.find()) {
             String periodsResult = periodsMatcher.group();
             Matcher periodStartMatcher = Pattern.compile("((<br)|(ed'))>[.[^(<|( ))]]+((<)|( ))").matcher(periodsResult);
             if (periodStartMatcher.find()) {
                 String periodStartResult = periodStartMatcher.group();
-                result = periodStartResult.substring(4, periodStartResult.length() - 1);
+                try {
+                    result = format.parse(periodStartResult.substring(4, periodStartResult.length() - 1)).getTime();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
         return result;
     }
 
-    private String getPeriodEnd(String page) {
-        String result = null;
+    private long getPeriodEnd(String page) {
+        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy", new Locale("ru"));
+        long result = -1;
         Matcher periodsMatcher = Pattern.compile("<p class='view_sale_date22'>Период акции:<br><br>(<font color='red'>)?[.[^<]]*<").matcher(page);
         if (periodsMatcher.find()) {
             String periodsResult = periodsMatcher.group();
             Matcher periodEndMatcher = Pattern.compile("[0-9] [.[^<]]*<").matcher(periodsResult);
             if (periodEndMatcher.find()) {
                 String periodEndResult = periodEndMatcher.group();
-                result = periodEndResult.substring(4, periodEndResult.length() - 1);
+                try {
+                    result = format.parse(periodEndResult.substring(4, periodEndResult.length() - 1)).getTime();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return result;

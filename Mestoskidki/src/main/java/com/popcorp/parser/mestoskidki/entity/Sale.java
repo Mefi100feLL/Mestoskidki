@@ -7,8 +7,8 @@ public class Sale implements DomainObject{
     private int id;
     private String title;
     private String subTitle;
-    private String periodStart;
-    private String periodEnd;
+    private long periodStart;
+    private long periodEnd;
     private String coast;
     private String quantity;
     private String coastForQuantity;
@@ -22,7 +22,7 @@ public class Sale implements DomainObject{
     private Iterable<SaleComment> comments;
     private Iterable<SaleSame> sameSales;
 
-    public Sale(int id, String title, String subTitle, String periodStart, String periodEnd, String coast, String quantity, String coastForQuantity, String image, int cityId, int shopId, int categoryId, int categoryType) {
+    public Sale(int id, String title, String subTitle, long periodStart, long periodEnd, String coast, String quantity, String coastForQuantity, String image, int cityId, int shopId, int categoryId, int categoryType) {
         this.id = id;
         this.title = title;
         this.subTitle = subTitle;
@@ -69,19 +69,19 @@ public class Sale implements DomainObject{
         this.subTitle = subTitle;
     }
 
-    public String getPeriodStart() {
+    public long getPeriodStart() {
         return periodStart;
     }
 
-    public void setPeriodStart(String periodStart) {
+    public void setPeriodStart(long periodStart) {
         this.periodStart = periodStart;
     }
 
-    public String getPeriodEnd() {
+    public long getPeriodEnd() {
         return periodEnd;
     }
 
-    public void setPeriodEnd(String periodEnd) {
+    public void setPeriodEnd(long periodEnd) {
         this.periodEnd = periodEnd;
     }
 

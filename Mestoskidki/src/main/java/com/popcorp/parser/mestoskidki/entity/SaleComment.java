@@ -7,17 +7,13 @@ public class SaleComment implements DomainObject {
     private int saleId;
     private String author;
     private String whom;
-    private String date;
-    private String time;
     private String text;
     private long dateTime;
 
-    public SaleComment(int saleId, String author, String whom, String date, String time, String text, long dateTime) {
+    public SaleComment(int saleId, String author, String whom, String text, long dateTime) {
         this.saleId = saleId;
         this.author = author;
         this.whom = whom;
-        this.date = date;
-        this.time = time;
         this.text = text;
         this.dateTime = dateTime;
     }
@@ -28,8 +24,7 @@ public class SaleComment implements DomainObject {
         SaleComment saleComment = (SaleComment) object;
         return getSaleId() == saleComment.getSaleId()
                 && getAuthor().equals(saleComment.getAuthor())
-                && getDate().equals(saleComment.getDate())
-                && getTime().equals(saleComment.getTime())
+                && getDateTime() == saleComment.getDateTime()
                 && getText().equals(saleComment.getText());
     }
 
@@ -47,22 +42,6 @@ public class SaleComment implements DomainObject {
 
     public void setWhom(String whom) {
         this.whom = whom;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
     }
 
     public int getSaleId() {

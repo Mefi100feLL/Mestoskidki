@@ -18,8 +18,6 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
     private static final String COLUMNS_SALE_ID = "sale_id";
     private static final String COLUMNS_AUTHOR = "author";
     private static final String COLUMNS_WHOM = "whom";
-    private static final String COLUMNS_DATE = "date";
-    private static final String COLUMNS_TIME = "time";
     private static final String COLUMNS_TEXT = "text";
     private static final String COLUMNS_DATE_TIME = "date_time";
 
@@ -27,8 +25,6 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
             COLUMNS_SALE_ID + ", " +
             COLUMNS_AUTHOR + ", " +
             COLUMNS_WHOM + ", " +
-            COLUMNS_DATE + ", " +
-            COLUMNS_TIME + ", " +
             COLUMNS_TEXT + ", " +
             COLUMNS_DATE_TIME + ")";
 
@@ -41,14 +37,10 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
                 object.getSaleId(),
                 object.getAuthor(),
                 object.getWhom(),
-                object.getDate(),
-                object.getTime(),
                 object.getText(),
                 object.getDateTime()};
         int[] types = new int[]{
                 Types.INTEGER,
-                Types.VARCHAR,
-                Types.VARCHAR,
                 Types.VARCHAR,
                 Types.VARCHAR,
                 Types.VARCHAR,
@@ -58,10 +50,8 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
         if (!jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES_COMMENTS + " WHERE " +
                 COLUMNS_SALE_ID + "=" + object.getSaleId() + " AND " +
                 COLUMNS_AUTHOR + "='" + object.getAuthor() + "' AND " +
-                COLUMNS_DATE + "='" + object.getDate() + "' AND " +
-                COLUMNS_TIME + "='" + object.getTime() + "' AND " +
-                COLUMNS_TEXT + "='" + object.getText() + "';").next()) {
-            result = jdbcOperations.update("INSERT INTO " + TABLE_SALES_COMMENTS + " " + COLUMNS_SALES_COMMENTS + " VALUES (?, ?, ?, ?, ?, ?, ?);", params, types);
+                COLUMNS_DATE_TIME + "=" + object.getDateTime() + ";").next()) {
+            result = jdbcOperations.update("INSERT INTO " + TABLE_SALES_COMMENTS + " " + COLUMNS_SALES_COMMENTS + " VALUES (?, ?, ?, ?, ?);", params, types);
         }
         return result;
     }
@@ -123,8 +113,6 @@ public class SaleCommentRepository implements DataRepository<SaleComment> {
                 rowSet.getInt(COLUMNS_SALE_ID),
                 rowSet.getString(COLUMNS_AUTHOR),
                 rowSet.getString(COLUMNS_WHOM),
-                rowSet.getString(COLUMNS_DATE),
-                rowSet.getString(COLUMNS_TIME),
                 rowSet.getString(COLUMNS_TEXT),
                 rowSet.getLong(COLUMNS_DATE_TIME));
     }

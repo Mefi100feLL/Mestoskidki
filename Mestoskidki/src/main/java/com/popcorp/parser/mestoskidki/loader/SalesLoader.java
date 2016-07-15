@@ -57,7 +57,9 @@ public class SalesLoader {
 
                             @Override
                             public void onNext(Sale sale) {
-                                saleRepository.save(sale);
+                                if (sale != null) {
+                                    saleRepository.save(sale);
+                                }
                             }
                         });
 

@@ -24,8 +24,16 @@ public class ErrorRepository implements DataRepository<Error> {
 
     @Override
     public int save(Error object) {
-        Object[] params = new Object[]{object.getBody(), object.getSubject()};
-        int[] types = new int[]{Types.VARCHAR, Types.VARCHAR};
+        Object[] params = new Object[]{
+                object.getBody(),
+                object.getSubject(),
+                object.getDatetime()
+        };
+        int[] types = new int[]{
+                Types.VARCHAR,
+                Types.VARCHAR,
+                Types.VARCHAR
+        };
 
         int result = 1;
         try {
