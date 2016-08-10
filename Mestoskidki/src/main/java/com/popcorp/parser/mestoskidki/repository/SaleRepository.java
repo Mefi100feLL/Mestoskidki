@@ -4,7 +4,6 @@ import com.popcorp.parser.mestoskidki.entity.Sale;
 import com.popcorp.parser.mestoskidki.entity.SaleComment;
 import com.popcorp.parser.mestoskidki.entity.SaleSame;
 import com.popcorp.parser.mestoskidki.util.ErrorManager;
-import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -16,51 +15,35 @@ import java.util.ArrayList;
 @org.springframework.stereotype.Repository(Sale.REPOSITORY)
 public class SaleRepository implements DataRepository<Sale> {
 
-    private static final String TABLE_SALES = "sales";
-    private static final String TABLE_SALES_CITIES = "sales_cities";
+    private static final String TABLE = "sales";
 
-    private static final String COLUMNS_SALE_ID = "sale_id";
-    private static final String COLUMNS_CITY_ID = "city_id";
+    private static final String COLUMN_ID = "id";
+    private static final String COLUMN_TITLE = "title";
+    private static final String COLUMN_SUB_TITLE = "sub_title";
+    private static final String COLUMN_PERIOD_START = "period_start";
+    private static final String COLUMN_PERIOD_END = "period_end";
+    private static final String COLUMN_COAST = "coast";
+    private static final String COLUMN_QUANTITY = "quantity";
+    private static final String COLUMN_COAST_FOR_QUANTITY = "coast_for_quantity";
+    private static final String COLUMN_IMAGE = "image";
+    private static final String COLUMN_SHOP_ID = "shop_id";
+    private static final String COLUMN_CATEGORY_ID = "category_id";
+    private static final String COLUMN_CATEGORY_TYPE = "category_type";
 
-    private static final String COLUMNS_ID = "id";
-    private static final String COLUMNS_TITLE = "title";
-    private static final String COLUMNS_SUB_TITLE = "sub_title";
-    private static final String COLUMNS_PERIOD_START = "period_start";
-    private static final String COLUMNS_PERIOD_END = "period_end";
-    private static final String COLUMNS_COAST = "coast";
-    private static final String COLUMNS_QUANTITY = "quantity";
-    private static final String COLUMNS_COAST_FOR_QUANTITY = "coast_for_quantity";
-    private static final String COLUMNS_IMAGE = "image";
-    private static final String COLUMNS_SHOP_ID = "shop_id";
-    private static final String COLUMNS_CATEGORY_ID = "category_id";
-    private static final String COLUMNS_CATEGORY_TYPE = "category_type";
-
-    private static final String COLUMNS_SALES = "(" +
-            COLUMNS_ID + ", " +
-            COLUMNS_TITLE + ", " +
-            COLUMNS_SUB_TITLE + ", " +
-            COLUMNS_PERIOD_START + ", " +
-            COLUMNS_PERIOD_END + ", " +
-            COLUMNS_COAST + ", " +
-            COLUMNS_QUANTITY + ", " +
-            COLUMNS_COAST_FOR_QUANTITY + ", " +
-            COLUMNS_IMAGE + ", " +
-            COLUMNS_SHOP_ID + ", " +
-            COLUMNS_CATEGORY_ID + ", " +
-            COLUMNS_CATEGORY_TYPE + ")";
-
-    private static final String COLUMNS_SALES_UPDATE =
-                    COLUMNS_TITLE + "=?, " +
-                    COLUMNS_SUB_TITLE + "=?, " +
-                    COLUMNS_PERIOD_START + "=?, " +
-                    COLUMNS_PERIOD_END + "=?, " +
-                    COLUMNS_COAST + "=?, " +
-                    COLUMNS_QUANTITY + "=?, " +
-                    COLUMNS_COAST_FOR_QUANTITY + "=?, " +
-                    COLUMNS_IMAGE + "=?, " +
-                    COLUMNS_SHOP_ID + "=?, " +
-                    COLUMNS_CATEGORY_ID + "=?, " +
-                    COLUMNS_CATEGORY_TYPE + "=?";
+    private static final String[] COLUMNS = new String[]{
+            COLUMN_ID,
+            COLUMN_TITLE,
+            COLUMN_SUB_TITLE,
+            COLUMN_PERIOD_START,
+            COLUMN_PERIOD_END,
+            COLUMN_COAST,
+            COLUMN_QUANTITY,
+            COLUMN_COAST_FOR_QUANTITY,
+            COLUMN_IMAGE,
+            COLUMN_SHOP_ID,
+            COLUMN_CATEGORY_ID,
+            COLUMN_CATEGORY_TYPE
+    };
 
     @Autowired
     protected JdbcOperations jdbcOperations;
@@ -72,6 +55,10 @@ public class SaleRepository implements DataRepository<Sale> {
     @Autowired
     @Qualifier(SaleSame.REPOSITORY)
     private SaleSameRepository saleSameRepository;
+
+    @Autowired
+    @Qualifier(Sale.CITY_REPOSITORY)
+    private SaleCityRepository saleCityRepository;
 
 
     @Override
@@ -102,22 +89,13 @@ public class SaleRepository implements DataRepository<Sale> {
                 Types.INTEGER,
                 Types.INTEGER,
                 Types.INTEGER};
-        int result;
-        int countOfUpdated = update(object);
-        if (countOfUpdated == 0) {
-            try {
-                jdbcOperations.update("INSERT INTO " + TABLE_SALES + " " + COLUMNS_SALES + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", params, types);
-            } catch (Exception e){
-                //e.printStackTrace();
-            }
-            result = saveInCities(object.getId(), object.getCityId());
-        } else {
-            int countInCities = updateInCities(object.getId(), object.getCityId());
-            if (countInCities == 0) {
-                saveInCities(object.getId(), object.getCityId());
-            }
-            result = countOfUpdated;
+
+        int result = update(object);
+        if (result == 0) {
+            result = DB.insert(jdbcOperations, TABLE, COLUMNS, params, types);
         }
+
+        saleCityRepository.save(object);
         if (object.getComments() != null) {
             saleCommentRepository.save(object.getComments());
         }
@@ -125,27 +103,6 @@ public class SaleRepository implements DataRepository<Sale> {
             saleSameRepository.save(object.getSameSales());
         }
         return result;
-    }
-
-    private int updateInCities(int saleId, int cityId) {
-        return jdbcOperations.update("UPDATE " + TABLE_SALES_CITIES + " SET " + COLUMNS_SALE_ID + "=?, " + COLUMNS_CITY_ID + "=? WHERE " +
-                COLUMNS_SALE_ID + "=? AND " + COLUMNS_CITY_ID + "=?;", new Object[]{
-                saleId,
-                cityId,
-                saleId,
-                cityId
-        });
-    }
-
-    private int saveInCities(int saleId, int cityId) {
-        return jdbcOperations.update("INSERT INTO " + TABLE_SALES_CITIES + " (" + COLUMNS_SALE_ID + ", " + COLUMNS_CITY_ID + ") VALUES (?, ?);",
-                new Object[]{
-                        saleId,
-                        cityId
-                }, new int[]{
-                        Types.INTEGER,
-                        Types.INTEGER
-                });
     }
 
     @Override
@@ -164,8 +121,33 @@ public class SaleRepository implements DataRepository<Sale> {
                 object.getCategoryType(),
                 object.getId()};
 
-        return jdbcOperations.update("UPDATE " + TABLE_SALES + " SET " + COLUMNS_SALES_UPDATE + " WHERE " +
-                COLUMNS_ID + "=?;", params);
+        String[] setColumns = new String[]{
+                COLUMN_TITLE,
+                COLUMN_SUB_TITLE,
+                COLUMN_PERIOD_START,
+                COLUMN_PERIOD_END,
+                COLUMN_COAST,
+                COLUMN_QUANTITY,
+                COLUMN_COAST_FOR_QUANTITY,
+                COLUMN_IMAGE,
+                COLUMN_SHOP_ID,
+                COLUMN_CATEGORY_ID,
+                COLUMN_CATEGORY_TYPE
+        };
+        String[] selectionColumns = new String[]{COLUMN_ID};
+        return DB.update(jdbcOperations, TABLE, setColumns, selectionColumns, params);
+    }
+
+    @Override
+    public int remove(Sale object) {
+        // Если такая акция для многих городов
+        if (saleCityRepository.getCount(object.getId()) > 1) {
+            //удаляем только для текущего города
+            return saleCityRepository.remove(object);
+        } else {
+            //удаляем акцию полностью, комменты и из городов удалятся каскадно
+            return DB.remove(jdbcOperations, TABLE, new String[]{COLUMN_ID}, new Object[]{object.getId()});
+        }
     }
 
     @Override
@@ -180,12 +162,14 @@ public class SaleRepository implements DataRepository<Sale> {
     @Override
     public Iterable<Sale> getAll() {
         ArrayList<Sale> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + ";");
-        while (rowSet.next()) {
-            Sale sale = getSale(rowSet);
-            sale.setComments(saleCommentRepository.getForSale(sale));
-            sale.setSameSales(saleSameRepository.getForSale(sale));
-            result.add(sale);
+        SqlRowSet rowSet = DB.getAllWithInnerJoin(jdbcOperations, TABLE, SaleCityRepository.TABLE, COLUMN_ID, SaleCityRepository.COLUMN_SALE_ID);
+        if (rowSet != null) {
+            while (rowSet.next()) {
+                Sale sale = getSale(rowSet);
+                sale.setComments(saleCommentRepository.getForSale(sale));
+                sale.setSameSales(saleSameRepository.getForSale(sale));
+                result.add(sale);
+            }
         }
         return result;
     }
@@ -193,36 +177,21 @@ public class SaleRepository implements DataRepository<Sale> {
     public Iterable<Sale> getForShopAndCategories(int cityId, String shops, String categs, String categsTypes) {
         ArrayList<Sale> result = new ArrayList<>();
         try {
-            String uslovie = " WHERE " + COLUMNS_CITY_ID + "=" + cityId;
-            if (shops.isEmpty()) {
+            if (shops.isEmpty() || categs.isEmpty()) {
                 return result;
-            } else {
-                uslovie += " AND " + COLUMNS_SHOP_ID + " = ANY(ARRAY" + shops + ")";
             }
-            if (categs.isEmpty()) {
-                return result;
-            } else {
-                JSONArray jsonCategs = new JSONArray(categs);
-                JSONArray jsonCategsTypes = new JSONArray(categsTypes);
-                if (jsonCategs.length() > 0) {
-                    uslovie += " AND (";
-                    for (int i = 0; i < jsonCategs.length(); i++) {
-                        if (i > 0) {
-                            uslovie += " OR ";
-                        }
-                        int category = jsonCategs.getInt(i);
-                        int type = jsonCategsTypes.getInt(i);
-                        uslovie += "(" + COLUMNS_CATEGORY_ID + "=" + category + " AND " + COLUMNS_CATEGORY_TYPE + "=" + type + ")";
-                    }
-                    uslovie += ")";
-                }
-            }
-            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + uslovie + ";");
+            String[] selectionColumns = new String[]{
+                    SaleCityRepository.COLUMN_CITY_ID
+            };
+            Object[] selectionValues = new Object[]{
+                    cityId
+            };
+            SqlRowSet rowSet = DB.getSales(jdbcOperations, TABLE, SaleCityRepository.TABLE, COLUMN_ID, SaleCityRepository.COLUMN_SALE_ID, selectionColumns, selectionValues, COLUMN_SHOP_ID, COLUMN_CATEGORY_ID, COLUMN_CATEGORY_TYPE, shops, categs, categsTypes);
             while (rowSet.next()) {
                 Sale sale = getSale(rowSet);
                 result.add(sale);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             ErrorManager.sendError(e.getMessage());
             e.printStackTrace();
             return null;
@@ -231,20 +200,20 @@ public class SaleRepository implements DataRepository<Sale> {
     }
 
     private Sale getSale(SqlRowSet rowSet) {
-        Sale result =  new Sale(
-                rowSet.getInt(COLUMNS_ID),
-                rowSet.getString(COLUMNS_TITLE),
-                rowSet.getString(COLUMNS_SUB_TITLE),
-                rowSet.getLong(COLUMNS_PERIOD_START),
-                rowSet.getLong(COLUMNS_PERIOD_END),
-                rowSet.getString(COLUMNS_COAST),
-                rowSet.getString(COLUMNS_QUANTITY),
-                rowSet.getString(COLUMNS_COAST_FOR_QUANTITY),
-                rowSet.getString(COLUMNS_IMAGE),
-                rowSet.getInt(COLUMNS_CITY_ID),
-                rowSet.getInt(COLUMNS_SHOP_ID),
-                rowSet.getInt(COLUMNS_CATEGORY_ID),
-                rowSet.getInt(COLUMNS_CATEGORY_TYPE));
+        Sale result = new Sale(
+                rowSet.getInt(COLUMN_ID),
+                rowSet.getString(COLUMN_TITLE),
+                rowSet.getString(COLUMN_SUB_TITLE),
+                rowSet.getLong(COLUMN_PERIOD_START),
+                rowSet.getLong(COLUMN_PERIOD_END),
+                rowSet.getString(COLUMN_COAST),
+                rowSet.getString(COLUMN_QUANTITY),
+                rowSet.getString(COLUMN_COAST_FOR_QUANTITY),
+                rowSet.getString(COLUMN_IMAGE),
+                rowSet.getInt(SaleCityRepository.COLUMN_CITY_ID),
+                rowSet.getInt(COLUMN_SHOP_ID),
+                rowSet.getInt(COLUMN_CATEGORY_ID),
+                rowSet.getInt(COLUMN_CATEGORY_TYPE));
 
         result.setCountComments(saleCommentRepository.getCountForSaleId(result.getId()));
         //sale.setComments(saleCommentRepository.getForSale(sale));
@@ -255,11 +224,19 @@ public class SaleRepository implements DataRepository<Sale> {
     public Sale getWithId(int city, int id) {
         Sale result = null;
         try {
-            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + " WHERE " + COLUMNS_CITY_ID + "=" + city + " AND " + COLUMNS_ID + "=" + id + ";");
-            if (rowSet.next()) {
+            String[] selectionColumns = new String[]{
+                    SaleCityRepository.COLUMN_CITY_ID,
+                    COLUMN_ID
+            };
+            Object[] selectionValues = new Object[]{
+                    city,
+                    id
+            };
+            SqlRowSet rowSet = DB.getWithInnerJoin(jdbcOperations, TABLE, SaleCityRepository.TABLE, COLUMN_ID, SaleCityRepository.COLUMN_SALE_ID, selectionColumns, selectionValues);
+            if (rowSet != null && rowSet.next()) {
                 result = getSale(rowSet);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             ErrorManager.sendError(e.getMessage());
             e.printStackTrace();
             return null;
@@ -269,37 +246,19 @@ public class SaleRepository implements DataRepository<Sale> {
 
     public Iterable<Sale> getAllForCity(int cityId) {
         ArrayList<Sale> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + " WHERE " + COLUMNS_CITY_ID + "=" + cityId + ";");
-        while (rowSet.next()) {
-            Sale sale = getSale(rowSet);
-            result.add(sale);
+        String[] selectionColumns = new String[]{
+                SaleCityRepository.COLUMN_CITY_ID
+        };
+        Object[] selectionValues = new Object[]{
+                cityId
+        };
+        SqlRowSet rowSet = DB.getWithInnerJoin(jdbcOperations, TABLE, SaleCityRepository.TABLE, COLUMN_ID, SaleCityRepository.COLUMN_SALE_ID, selectionColumns, selectionValues);
+        if (rowSet != null) {
+            while (rowSet.next()) {
+                Sale sale = getSale(rowSet);
+                result.add(sale);
+            }
         }
         return result;
-    }
-
-    public void removeSale(int cityId, int saleId) {
-        if (getCountInCities(saleId) > 1) {
-            jdbcOperations.update("DELETE FROM " + TABLE_SALES_CITIES + " WHERE " + COLUMNS_CITY_ID + "=" + cityId + " AND " + COLUMNS_SALE_ID + "=" + saleId + ";");
-        } else {
-            jdbcOperations.update("DELETE FROM " + TABLE_SALES + " WHERE " + COLUMNS_ID + "=" + saleId + ";");
-        }
-        //saleCommentRepository.removeForSale(saleId);
-        //saleSameRepository.removeForSale(cityId, saleId);
-    }
-
-    public int getCount(int cityId, int shopId) {
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT COUNT(*) AS count FROM " + TABLE_SALES + " INNER JOIN " + TABLE_SALES_CITIES + " ON " + COLUMNS_ID + "=" + COLUMNS_SALE_ID + " WHERE " + COLUMNS_CITY_ID + "=" + cityId + " AND " + COLUMNS_SHOP_ID + "=" + shopId + ";");
-        if (rowSet.next()) {
-            return rowSet.getInt("count");
-        }
-        return 0;
-    }
-
-    public int getCountInCities(int saleId) {
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT COUNT(*) AS count FROM " + TABLE_SALES_CITIES + " WHERE " + COLUMNS_SALE_ID + "=" + saleId + ";");
-        if (rowSet.next()) {
-            return rowSet.getInt("count");
-        }
-        return 0;
     }
 }

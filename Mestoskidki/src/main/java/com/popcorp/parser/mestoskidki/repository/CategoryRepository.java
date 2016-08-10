@@ -12,39 +12,77 @@ import java.util.ArrayList;
 @org.springframework.stereotype.Repository(Category.REPOSITORY)
 public class CategoryRepository implements DataRepository<Category> {
 
-    private static final String TABLE_CATEGORIES = "categories";
+    private static final String TABLE = "categories";
 
-    private static final String COLUMNS_ID = "id";
-    private static final String COLUMNS_TYPE = "type";
-    private static final String COLUMNS_NAME = "name";
-    private static final String COLUMNS_IMAGE = "image";
+    private static final String COLUMN_ID = "id";
+    private static final String COLUMN_TYPE = "type";
+    private static final String COLUMN_NAME = "name";
+    private static final String COLUMN_IMAGE = "image";
 
-    private static final String COLUMNS_CATEGORIES = "(" + COLUMNS_ID + ", " + COLUMNS_TYPE + ", " + COLUMNS_NAME + ", " + COLUMNS_IMAGE + ")";
-
-    private static final String COLUMNS_CATEGORIES_UPDATE = COLUMNS_NAME + "=?, " + COLUMNS_IMAGE + "=?";
+    private static final String[] COLUMNS = new String[] {
+            COLUMN_ID,
+            COLUMN_TYPE,
+            COLUMN_NAME,
+            COLUMN_IMAGE
+    };
 
     @Autowired
     protected JdbcOperations jdbcOperations;
 
+
     @Override
     public int save(Category object) {
-        Object[] params = new Object[] { object.getId(), object.getType(), object.getName(), object.getImage()};
-        int[] types = new int[] { Types.INTEGER, Types.INTEGER, Types.VARCHAR, Types.VARCHAR };
+        Object[] params = new Object[] {
+                object.getId(),
+                object.getType(),
+                object.getName(),
+                object.getImage()
+        };
+        int[] types = new int[] {
+                Types.INTEGER,
+                Types.INTEGER,
+                Types.VARCHAR,
+                Types.VARCHAR
+        };
 
-        int countOfUpdated = update(object);
-        if (countOfUpdated == 0) {
-            return jdbcOperations.update("INSERT INTO " + TABLE_CATEGORIES + " " + COLUMNS_CATEGORIES + " VALUES (?, ?, ?, ?);", params, types);
-        } else{
-            return countOfUpdated;
+        int result = update(object);
+        if (result == 0) {
+            return DB.insert(jdbcOperations, TABLE, COLUMNS, params, types);
         }
+        return result;
     }
 
     @Override
     public int update(Category object){
-        Object[] params = new Object[] { object.getName(), object.getImage(), object.getId(), object.getType()};
+        Object[] params = new Object[] {
+                object.getName(),
+                object.getImage(),
+                object.getId(),
+                object.getType()
+        };
 
-        return jdbcOperations.update("UPDATE " + TABLE_CATEGORIES + " SET " + COLUMNS_CATEGORIES_UPDATE + " WHERE " +
-                COLUMNS_ID + "=? AND " + COLUMNS_TYPE + "=?;", params);
+        String[] setColumns = new String[]{
+                COLUMN_NAME,
+                COLUMN_IMAGE
+        };
+        String[] selectionColumns = new String[]{
+                COLUMN_ID,
+                COLUMN_TYPE
+        };
+        return DB.update(jdbcOperations, TABLE, setColumns, selectionColumns, params);
+    }
+
+    @Override
+    public int remove(Category object) {
+        String[] selectionColumns = new String[]{
+                COLUMN_ID,
+                COLUMN_TYPE
+        };
+        Object[] selectionValues = new Object[]{
+                object.getId(),
+                object.getType()
+        };
+        return DB.remove(jdbcOperations, TABLE, selectionColumns, selectionValues);
     }
 
     @Override
@@ -60,10 +98,11 @@ public class CategoryRepository implements DataRepository<Category> {
     public Iterable<Category> getAll() {
         ArrayList<Category> result = new ArrayList<>();
         try {
-            SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_CATEGORIES + ";");
-            while (rowSet.next()) {
-                Category category = new Category(rowSet.getInt(COLUMNS_ID), rowSet.getInt(COLUMNS_TYPE), rowSet.getString(COLUMNS_NAME), rowSet.getString(COLUMNS_IMAGE));
-                result.add(category);
+            SqlRowSet rowSet = DB.getAll(jdbcOperations, TABLE);
+            if (rowSet != null) {
+                while (rowSet.next()) {
+                    result.add(getCategory(rowSet));
+                }
             }
         } catch (Exception e){
             ErrorManager.sendError(e.getMessage());
@@ -71,5 +110,14 @@ public class CategoryRepository implements DataRepository<Category> {
             return null;
         }
         return result;
+    }
+
+    private Category getCategory(SqlRowSet rowSet) {
+        return new Category(
+                rowSet.getInt(COLUMN_ID),
+                rowSet.getInt(COLUMN_TYPE),
+                rowSet.getString(COLUMN_NAME),
+                rowSet.getString(COLUMN_IMAGE)
+        );
     }
 }

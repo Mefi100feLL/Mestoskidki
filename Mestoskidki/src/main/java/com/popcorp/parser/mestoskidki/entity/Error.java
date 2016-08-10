@@ -37,7 +37,7 @@ public class Error implements DomainObject {
         this.body = body;
     }
 
-    public String getDatetime() {
+    public String getDateTime() {
         return datetime;
     }
 

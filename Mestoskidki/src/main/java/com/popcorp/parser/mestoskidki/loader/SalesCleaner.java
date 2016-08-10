@@ -11,14 +11,10 @@ import java.util.Calendar;
 
 public class SalesCleaner {
 
-    private CityRepository cityRepository;
-
-    private SaleRepository saleRepository;
-
     public void clearOldSales(){
         try {
-            cityRepository = Application.getCityRepository();
-            saleRepository = Application.getSaleRepository();
+            CityRepository cityRepository = Application.getCityRepository();
+            SaleRepository saleRepository = Application.getSaleRepository();
             for (City city : cityRepository.getAll()) {
                 Calendar cityTime = Calendar.getInstance();
                 cityTime.add(Calendar.HOUR_OF_DAY, city.getTimeZone());
@@ -29,7 +25,7 @@ public class SalesCleaner {
                     saleTime.set(Calendar.HOUR_OF_DAY, 0);
                     saleTime.set(Calendar.MINUTE, 30);
                     if (cityTime.getTimeInMillis() > saleTime.getTimeInMillis()) {
-                        saleRepository.removeSale(city.getId(), sale.getId());
+                        saleRepository.remove(sale);
                     }
                 }
             }

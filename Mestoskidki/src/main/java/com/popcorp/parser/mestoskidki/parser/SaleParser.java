@@ -40,13 +40,13 @@ public class SaleParser {
                         String subTitle = getSubTitle(page);
 
                         long periodStart = getPeriodStart(page);
-                        if (periodStart == -1) {
+                        if (periodStart < 0) {
                             ErrorManager.sendError("Mestoskidki: PeriodStart for sale not finded! Id: " + saleId + ", cityId: " + cityId);
                             return Observable.just(null);
                         }
 
                         long periodEnd = getPeriodEnd(page);
-                        periodEnd = periodEnd == -1 ? periodStart : periodEnd;
+                        periodEnd = periodEnd < 0 ? periodStart : periodEnd;
 
                         String coast = getCoast(page);
                         if (coast.isEmpty()) {
@@ -91,10 +91,14 @@ public class SaleParser {
 
     private String getImage(String page){
         String result = "";
-        Matcher imageMatcher = Pattern.compile("class='img_big[0-9]*' align='left' src='[.[^']]*'").matcher(page);
-        if (imageMatcher.find()){
-            String imageResult = imageMatcher.group();
-            result = imageResult.substring(34, imageResult.length() - 1);
+        Matcher imageLineMatcher = Pattern.compile("class='img_big[0-9]*' align='left' src='[.[^']]*'").matcher(page);
+        if (imageLineMatcher.find()){
+            String imageLineResult = imageLineMatcher.group();
+            Matcher imageMatcher = Pattern.compile("src='[.[^']]*'").matcher(imageLineResult);
+            if (imageMatcher.find()) {
+                String imageResult = imageMatcher.group();
+                result = imageResult.substring(5, imageResult.length() - 1);
+            }
         }
         return result;
     }
@@ -235,7 +239,7 @@ public class SaleParser {
         Matcher titleMatcher = Pattern.compile("<p class='larger'><strong>[.[^<]]*<").matcher(page);
         if (titleMatcher.find()) {
             String titleResult = titleMatcher.group();
-            result = titleResult.substring(26, titleResult.length() - 1);
+            result = titleResult.substring(26, titleResult.length() - 1).trim();
         }
         return result;
     }

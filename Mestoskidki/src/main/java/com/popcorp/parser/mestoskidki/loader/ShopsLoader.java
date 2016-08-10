@@ -16,12 +16,10 @@ public class ShopsLoader {
 
     private ShopsRepository shopsRepository;
 
-    private CityRepository cityRepository;
-
     public void loadShops() {
         try {
             shopsRepository = Application.getShopsRepository();
-            cityRepository = Application.getCityRepository();
+            CityRepository cityRepository = Application.getCityRepository();
             Iterable<City> cities = cityRepository.getAll();
             for (City city : cities) {
                 ShopsParser.loadShops(city.getId())

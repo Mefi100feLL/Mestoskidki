@@ -11,39 +11,78 @@ import java.util.ArrayList;
 @org.springframework.stereotype.Repository(CategoryInner.REPOSITORY)
 public class CategoryInnerRepository implements DataRepository<CategoryInner> {
 
-    private static final String TABLE_CATEGORIES_INNER = "categ_inners";
+    private static final String TABLE = "categ_inners";
 
-    private static final String COLUMNS_ID = "id";
-    private static final String COLUMNS_TYPE = "type";
-    private static final String COLUMNS_PARENT_ID = "parent_id";
-    private static final String COLUMNS_PARENT_TYPE = "parent_type";
+    private static final String COLUMN_ID = "id";
+    private static final String COLUMN_TYPE = "type";
+    private static final String COLUMN_PARENT_ID = "parent_id";
+    private static final String COLUMN_PARENT_TYPE = "parent_type";
 
-    private static final String COLUMNS_CATEGORIES_INNERS = "(" + COLUMNS_ID + ", " + COLUMNS_TYPE + ", " + COLUMNS_PARENT_ID + ", " + COLUMNS_PARENT_TYPE + ")";
-
-    private static final String COLUMNS_CATEGORIES_INNERS_UPDATE = COLUMNS_PARENT_ID + "=?, " + COLUMNS_PARENT_TYPE + "=?";
+    private static final String[] COLUMNS = new String[]{
+            COLUMN_ID,
+            COLUMN_TYPE,
+            COLUMN_PARENT_ID,
+            COLUMN_PARENT_TYPE
+    };
 
     @Autowired
     protected JdbcOperations jdbcOperations;
 
+
     @Override
     public int save(CategoryInner object) {
-        Object[] params = new Object[]{object.getId(), object.getType(), object.getParentId(), object.getParentType()};
-        int[] types = new int[]{Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER};
+        Object[] params = new Object[]{
+                object.getId(),
+                object.getType(),
+                object.getParentId(),
+                object.getParentType()
+        };
+        int[] types = new int[]{
+                Types.INTEGER,
+                Types.INTEGER,
+                Types.INTEGER,
+                Types.INTEGER
+        };
 
-        int countOfUpdates = update(object);
-        if (countOfUpdates == 0) {
-            return jdbcOperations.update("INSERT INTO " + TABLE_CATEGORIES_INNER + " " + COLUMNS_CATEGORIES_INNERS + " VALUES (?, ?, ?, ?);", params, types);
-        } else {
-            return countOfUpdates;
+        int result = update(object);
+        if (result == 0) {
+            result = DB.insert(jdbcOperations, TABLE, COLUMNS, params, types);
         }
+
+        return result;
     }
 
     @Override
     public int update(CategoryInner object) {
-        Object[] params = new Object[]{object.getParentId(), object.getParentType(), object.getId(), object.getType()};
+        Object[] params = new Object[]{
+                object.getParentId(),
+                object.getParentType(),
+                object.getId(),
+                object.getType()
+        };
 
-        return jdbcOperations.update("UPDATE " + TABLE_CATEGORIES_INNER + " SET " + COLUMNS_CATEGORIES_INNERS_UPDATE + " WHERE " +
-                COLUMNS_ID + "=? AND " + COLUMNS_TYPE + "=?;", params);
+        String[] setColumns = new String[]{
+                COLUMN_PARENT_ID,
+                COLUMN_PARENT_TYPE
+        };
+        String[] selectionColumns = new String[]{
+                COLUMN_ID,
+                COLUMN_TYPE
+        };
+        return DB.update(jdbcOperations, TABLE, setColumns, selectionColumns, params);
+    }
+
+    @Override
+    public int remove(CategoryInner object) {
+        String[] selectionColumns = new String[]{
+                COLUMN_ID,
+                COLUMN_TYPE
+        };
+        Object[] selectionValues = new Object[]{
+                object.getId(),
+                object.getType()
+        };
+        return DB.remove(jdbcOperations, TABLE, selectionColumns, selectionValues);
     }
 
     @Override
@@ -58,18 +97,36 @@ public class CategoryInnerRepository implements DataRepository<CategoryInner> {
     @Override
     public Iterable<CategoryInner> getAll() {
         ArrayList<CategoryInner> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_CATEGORIES_INNER + ";");
-        while (rowSet.next()) {
-            CategoryInner categoryInner = new CategoryInner(rowSet.getInt(COLUMNS_ID), rowSet.getInt(COLUMNS_TYPE), rowSet.getInt(COLUMNS_PARENT_ID), rowSet.getInt(COLUMNS_PARENT_TYPE));
-            result.add(categoryInner);
+        SqlRowSet rowSet = DB.getAll(jdbcOperations, TABLE);
+        if (rowSet != null) {
+            while (rowSet.next()) {
+                result.add(getCategoryInner(rowSet));
+            }
         }
         return result;
     }
 
+    private CategoryInner getCategoryInner(SqlRowSet rowSet) {
+        return new CategoryInner(
+                rowSet.getInt(COLUMN_ID),
+                rowSet.getInt(COLUMN_TYPE),
+                rowSet.getInt(COLUMN_PARENT_ID),
+                rowSet.getInt(COLUMN_PARENT_TYPE)
+        );
+    }
+
     public int getCategoryForInner(int id, int type) {
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_CATEGORIES_INNER + " WHERE " + COLUMNS_ID + "=" + id + " AND " + COLUMNS_TYPE + "=" + type + ";");
-        if (rowSet.next()) {
-            return rowSet.getInt(COLUMNS_PARENT_ID);
+        String[] selectionColumns = new String[]{
+                COLUMN_ID,
+                COLUMN_TYPE
+        };
+        Object[] selectionValues = new Object[]{
+                id,
+                type
+        };
+        SqlRowSet rowSet = DB.get(jdbcOperations, TABLE, selectionColumns, selectionValues);
+        if (rowSet != null && rowSet.next()) {
+            return rowSet.getInt(COLUMN_PARENT_ID);
         }
         return id;
     }

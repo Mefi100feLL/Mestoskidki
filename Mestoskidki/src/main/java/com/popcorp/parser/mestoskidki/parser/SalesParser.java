@@ -43,7 +43,7 @@ public class SalesParser {
                     } catch (IOException e) {
                         e.printStackTrace();
                         ErrorManager.sendError("Mestoskidki: Page with sales not loaded! Shop: " + shopId + ", city: " + cityId + " page: " + pageIndex + ", error: " + e.getMessage());
-                        return Observable.empty();
+                        return Observable.error(e);
                     }
                     return Observable.just(getSalesIds(page));
                 });

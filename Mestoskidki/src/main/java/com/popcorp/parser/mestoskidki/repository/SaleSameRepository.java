@@ -12,36 +12,31 @@ import java.util.ArrayList;
 @org.springframework.stereotype.Repository(SaleSame.REPOSITORY)
 public class SaleSameRepository implements DataRepository<SaleSame> {
 
-    private static final String TABLE_SAME_SALES = "sales_sames";
+    private static final String TABLE = "sales_sames";
 
-    private static final String COLUMNS_PARENT_SALE_ID = "parent_sale_id";
-    private static final String COLUMNS_CITY_ID = "city_id";
-    private static final String COLUMNS_SALE_ID = "sale_id";
-    private static final String COLUMNS_TEXT = "text";
-    private static final String COLUMNS_COAST = "coast";
-    private static final String COLUMNS_SHOP_NAME = "shop_name";
-    private static final String COLUMNS_PERIOD_START = "period_start";
-    private static final String COLUMNS_PERIOD_END = "period_end";
+    private static final String COLUMN_PARENT_SALE_ID = "parent_sale_id";
+    private static final String COLUMN_CITY_ID = "city_id";
+    private static final String COLUMN_SALE_ID = "sale_id";
+    private static final String COLUMN_TEXT = "text";
+    private static final String COLUMN_COAST = "coast";
+    private static final String COLUMN_SHOP_NAME = "shop_name";
+    private static final String COLUMN_PERIOD_START = "period_start";
+    private static final String COLUMN_PERIOD_END = "period_end";
 
-    private static final String COLUMNS_SAME_SALES = "(" +
-            COLUMNS_PARENT_SALE_ID + ", " +
-            COLUMNS_CITY_ID + ", " +
-            COLUMNS_SALE_ID + ", " +
-            COLUMNS_TEXT + ", " +
-            COLUMNS_COAST + ", " +
-            COLUMNS_SHOP_NAME + ", " +
-            COLUMNS_PERIOD_START + ", " +
-            COLUMNS_PERIOD_END + ")";
-
-    private static final String COLUMNS_SAME_SALES_UPDATE =
-            COLUMNS_TEXT + "=?, " +
-                    COLUMNS_COAST + "=?, " +
-                    COLUMNS_SHOP_NAME + "=?, " +
-                    COLUMNS_PERIOD_START + "=?, " +
-                    COLUMNS_PERIOD_END + "=?";
+    private static final String[] COLUMNS = new String[] {
+            COLUMN_PARENT_SALE_ID,
+            COLUMN_CITY_ID,
+            COLUMN_SALE_ID,
+            COLUMN_TEXT,
+            COLUMN_COAST,
+            COLUMN_SHOP_NAME,
+            COLUMN_PERIOD_START,
+            COLUMN_PERIOD_END
+    };
 
     @Autowired
     protected JdbcOperations jdbcOperations;
+
 
     @Override
     public int save(SaleSame object) {
@@ -64,12 +59,11 @@ public class SaleSameRepository implements DataRepository<SaleSame> {
                 Types.VARCHAR,
                 Types.VARCHAR};
 
-        int countOfUpdated = update(object);
-        if (countOfUpdated == 0) {
-            return jdbcOperations.update("INSERT INTO " + TABLE_SAME_SALES + " " + COLUMNS_SAME_SALES + " VALUES (?, ?, ?, ?, ?, ?, ?, ?);", params, types);
-        } else {
-            return countOfUpdated;
+        int result = update(object);
+        if (result == 0) {
+            result = DB.insert(jdbcOperations, TABLE, COLUMNS, params, types);
         }
+        return result;
     }
 
     @Override
@@ -84,8 +78,34 @@ public class SaleSameRepository implements DataRepository<SaleSame> {
                 object.getCityId(),
                 object.getSaleId()};
 
-        return jdbcOperations.update("UPDATE " + TABLE_SAME_SALES + " SET " + COLUMNS_SAME_SALES_UPDATE + " WHERE " +
-                COLUMNS_PARENT_SALE_ID + "=? AND " + COLUMNS_CITY_ID + "=? AND " + COLUMNS_SALE_ID + "=?;", params);
+        String[] setColumns = new String[] {
+                COLUMN_TEXT,
+                COLUMN_COAST,
+                COLUMN_SHOP_NAME,
+                COLUMN_PERIOD_START,
+                COLUMN_PERIOD_END
+        };
+        String[] selectionColumns = new String[] {
+                COLUMN_PARENT_SALE_ID,
+                COLUMN_CITY_ID,
+                COLUMN_SALE_ID
+        };
+        return DB.update(jdbcOperations, TABLE, setColumns, selectionColumns, params);
+    }
+
+    @Override
+    public int remove(SaleSame object) {
+        String[] selectionColumns = new String[]{
+                COLUMN_PARENT_SALE_ID,
+                COLUMN_CITY_ID,
+                COLUMN_SALE_ID
+        };
+        Object[] selectionValues = new Object[]{
+                object.getParentSaleId(),
+                object.getCityId(),
+                object.getSaleId()
+        };
+        return DB.remove(jdbcOperations, TABLE, selectionColumns, selectionValues);
     }
 
     @Override
@@ -100,41 +120,43 @@ public class SaleSameRepository implements DataRepository<SaleSame> {
     @Override
     public Iterable<SaleSame> getAll() {
         ArrayList<SaleSame> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SAME_SALES + ";");
-        while (rowSet.next()) {
-            SaleSame city = new SaleSame(
-                    rowSet.getInt(COLUMNS_PARENT_SALE_ID),
-                    rowSet.getInt(COLUMNS_CITY_ID),
-                    rowSet.getInt(COLUMNS_SALE_ID),
-                    rowSet.getString(COLUMNS_TEXT),
-                    rowSet.getString(COLUMNS_COAST),
-                    rowSet.getString(COLUMNS_SHOP_NAME),
-                    rowSet.getString(COLUMNS_PERIOD_START),
-                    rowSet.getString(COLUMNS_PERIOD_END));
-            result.add(city);
+        SqlRowSet rowSet = DB.getAll(jdbcOperations, TABLE);
+        if (rowSet != null) {
+            while (rowSet.next()) {
+                result.add(getSameSale(rowSet));
+            }
         }
         return result;
     }
 
     public Iterable<SaleSame> getForSale(Sale sale) {
         ArrayList<SaleSame> result = new ArrayList<>();
-        SqlRowSet rowSet = jdbcOperations.queryForRowSet("SELECT * FROM " + TABLE_SAME_SALES + " WHERE " + COLUMNS_CITY_ID + "=" + sale.getCityId() + " AND " + COLUMNS_PARENT_SALE_ID + "=" + sale.getId() + ";");
-        while (rowSet.next()) {
-            SaleSame city = new SaleSame(
-                    rowSet.getInt(COLUMNS_PARENT_SALE_ID),
-                    rowSet.getInt(COLUMNS_CITY_ID),
-                    rowSet.getInt(COLUMNS_SALE_ID),
-                    rowSet.getString(COLUMNS_TEXT),
-                    rowSet.getString(COLUMNS_COAST),
-                    rowSet.getString(COLUMNS_SHOP_NAME),
-                    rowSet.getString(COLUMNS_PERIOD_START),
-                    rowSet.getString(COLUMNS_PERIOD_END));
-            result.add(city);
+        String[] selectionColumns = new String[] {
+                COLUMN_CITY_ID,
+                COLUMN_PARENT_SALE_ID
+        };
+        Object[] selectionValues = new Object[]{
+                sale.getCityId(),
+                sale.getId()
+        };
+        SqlRowSet rowSet = DB.get(jdbcOperations, TABLE, selectionColumns, selectionValues);
+        if (rowSet != null) {
+            while (rowSet.next()) {
+                result.add(getSameSale(rowSet));
+            }
         }
         return result;
     }
 
-    public void removeForSale(int cityId, int saleId) {
-        jdbcOperations.update("DELETE FROM " + TABLE_SAME_SALES + " WHERE " + COLUMNS_CITY_ID + "=" + cityId + " AND " + COLUMNS_PARENT_SALE_ID + "=" + saleId + ";");
+    private SaleSame getSameSale(SqlRowSet rowSet) {
+        return new SaleSame(
+                rowSet.getInt(COLUMN_PARENT_SALE_ID),
+                rowSet.getInt(COLUMN_CITY_ID),
+                rowSet.getInt(COLUMN_SALE_ID),
+                rowSet.getString(COLUMN_TEXT),
+                rowSet.getString(COLUMN_COAST),
+                rowSet.getString(COLUMN_SHOP_NAME),
+                rowSet.getString(COLUMN_PERIOD_START),
+                rowSet.getString(COLUMN_PERIOD_END));
     }
 }
