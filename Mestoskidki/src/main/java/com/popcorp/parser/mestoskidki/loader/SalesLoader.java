@@ -3,16 +3,16 @@ package com.popcorp.parser.mestoskidki.loader;
 import com.popcorp.parser.mestoskidki.Application;
 import com.popcorp.parser.mestoskidki.entity.Sale;
 import com.popcorp.parser.mestoskidki.entity.Shop;
+import com.popcorp.parser.mestoskidki.net.APIFactory;
 import com.popcorp.parser.mestoskidki.parser.SaleParser;
-import com.popcorp.parser.mestoskidki.repository.SaleRepository;
 import com.popcorp.parser.mestoskidki.parser.SalesParser;
 import com.popcorp.parser.mestoskidki.repository.CategoryInnerRepository;
+import com.popcorp.parser.mestoskidki.repository.SaleRepository;
 import com.popcorp.parser.mestoskidki.repository.ShopsRepository;
 import com.popcorp.parser.mestoskidki.util.ErrorManager;
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 import java.util.ArrayList;
 
@@ -32,7 +32,7 @@ public class SalesLoader {
             Iterable<Shop> shops = shopsRepository.getAll();
             for (Shop shop : shops) {
                 SalesParser.loadSales(shop.getCityId(), shop.getId())
-                        .subscribeOn(Schedulers.newThread())
+                        .subscribeOn(APIFactory.getScheduler())
                         .flatMap(new Func1<ArrayList<Integer>, Observable<Sale>>() {
                             @Override
                             public Observable<Sale> call(ArrayList<Integer> salesIds) {
@@ -59,6 +59,8 @@ public class SalesLoader {
                             public void onNext(Sale sale) {
                                 if (sale != null) {
                                     saleRepository.save(sale);
+                                } else {
+                                    int a = 0;
                                 }
                             }
                         });

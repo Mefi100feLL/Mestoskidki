@@ -108,4 +108,18 @@ public class CityRepository implements DataRepository<City> {
                 rowSet.getInt(COLUMN_TIME_ZONE)
         );
     }
+
+    public City getWithId(int cityId) {
+        City result = new City(cityId, "", "", 0);
+        try {
+            SqlRowSet rowSet = DB.get(jdbcOperations, TABLE, new String[] {COLUMN_ID}, new Object[] {cityId});
+            if (rowSet != null && rowSet.next()) {
+                result = getCity(rowSet);
+            }
+        } catch (Exception e){
+            ErrorManager.sendError(e.getMessage());
+            e.printStackTrace();
+        }
+        return result;
+    }
 }

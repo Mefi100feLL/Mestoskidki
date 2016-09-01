@@ -19,7 +19,7 @@ public class ScheduledTasks {
         new CitiesLoader().loadCities();
     }
 
-    @Scheduled(fixedRate = 600000, initialDelay = 10000)//10000
+    @Scheduled(fixedRate = 600000, initialDelay = 1000)//10000
     public void loadShops() {
         new ShopsLoader().loadShops();
     }
@@ -34,7 +34,7 @@ public class ScheduledTasks {
         new CategoriesInnerLoader().loadCategories();
     }
 
-    @Scheduled(fixedRate = 3600000, initialDelay = 30000)//3600000
+    @Scheduled(fixedRate = 3600000, initialDelay = 10000)//30000
     public void loadSales() {
         new SalesLoader().loadSales();
     }

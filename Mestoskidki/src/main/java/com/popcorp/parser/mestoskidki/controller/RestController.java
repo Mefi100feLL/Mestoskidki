@@ -2,7 +2,6 @@ package com.popcorp.parser.mestoskidki.controller;
 
 import com.popcorp.parser.mestoskidki.dto.UniversalDTO;
 import com.popcorp.parser.mestoskidki.entity.*;
-import com.popcorp.parser.mestoskidki.net.APIFactory;
 import com.popcorp.parser.mestoskidki.parser.SaleParser;
 import com.popcorp.parser.mestoskidki.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import rx.schedulers.Schedulers;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
@@ -119,37 +115,46 @@ public class RestController {
     }
 
     @RequestMapping("/comments")
-    public UniversalDTO<Iterable<SaleComment>> getComments(@RequestParam(value = "sale", defaultValue = "-1") int saleId) {
-        if (saleId == -1) {
+    public UniversalDTO<Iterable<SaleComment>> getComments(
+            @RequestParam(value = "sale", defaultValue = "-1") int saleId,
+            @RequestParam(value = "city", defaultValue = "-1") int cityId) {
+        if (saleId == -1 || cityId == -1) {
             return new UniversalDTO<>(true, "Неверные входные параметры", null);
         }
         UniversalDTO<Iterable<SaleComment>> result = new UniversalDTO<>(true, "Ошибка при поиске комментариев", null);
         Iterable<SaleComment> comments = saleCommentRepository.getForSaleId(saleId);
+        int timeZone = cityRepository.getWithId(cityId).getTimeZone();
         if (comments != null) {
+            for (SaleComment comment : comments) {
+                Calendar dateTime = Calendar.getInstance();
+                dateTime.setTimeInMillis(comment.getDateTime());
+                dateTime.add(Calendar.HOUR_OF_DAY, timeZone);
+                comment.setDateTime(dateTime.getTimeInMillis());
+            }
             result = new UniversalDTO<>(false, "", comments);
         }
         return result;
     }
 
     @RequestMapping("/comments/new")
-    public CommentResult sendComment(
+    public UniversalDTO<SaleComment> sendComment(
             @RequestParam(value = "author", defaultValue = "") String author,
             @RequestParam(value = "whom", defaultValue = "") String whom,
             @RequestParam(value = "text", defaultValue = "") String text,
             @RequestParam(value = "city", defaultValue = "-1") int city,
             @RequestParam(value = "id", defaultValue = "-1") int id) {
         if (city == -1 || id == -1 || author.isEmpty() || text.isEmpty()) {
-            return new CommentResult(false, "Неверные входные параметры", "", "", 0);
+            return new UniversalDTO<>(true, "Неверные входные параметры", null);
         }
         Calendar currentDate = Calendar.getInstance();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", new Locale("ru"));
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", new Locale("ru"));
-        String date = dateFormat.format(currentDate.getTime());
-        String time = timeFormat.format(currentDate.getTime());
-        long dateTime = currentDate.getTimeInMillis();
-        SaleComment saleComment = new SaleComment(id, author, whom, text, dateTime);
+        SaleComment saleComment = new SaleComment(id, author, whom, text, currentDate.getTimeInMillis());
+        saleCommentRepository.save(saleComment);
 
-        return APIFactory.getAPI().sendComment(author, whom, text, city, id, "", "4", "8", "Комментировать")
+        currentDate.add(Calendar.HOUR_OF_DAY, cityRepository.getWithId(city).getTimeZone());
+        saleComment.setDateTime(currentDate.getTimeInMillis());
+
+        return new UniversalDTO<>(false, "", saleComment);
+        /*return APIFactory.getAPI().sendComment(author, whom, text, city, id, "", "4", "8", "Комментировать")
                 .map(responseBody -> {
                     String result;
                     try {
@@ -166,6 +171,6 @@ public class RestController {
                 })
                 .onErrorReturn(throwable -> new CommentResult(false, throwable.getMessage(), "", "", 0))
                 .toBlocking()
-                .first();
+                .first();*/
     }
 }

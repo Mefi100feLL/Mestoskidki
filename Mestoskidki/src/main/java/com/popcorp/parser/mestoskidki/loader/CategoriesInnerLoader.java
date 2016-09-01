@@ -2,11 +2,11 @@ package com.popcorp.parser.mestoskidki.loader;
 
 import com.popcorp.parser.mestoskidki.Application;
 import com.popcorp.parser.mestoskidki.entity.CategoryInner;
+import com.popcorp.parser.mestoskidki.net.APIFactory;
 import com.popcorp.parser.mestoskidki.parser.CategoryInnersParser;
 import com.popcorp.parser.mestoskidki.repository.CategoryInnerRepository;
 import com.popcorp.parser.mestoskidki.util.ErrorManager;
 import rx.Observer;
-import rx.schedulers.Schedulers;
 
 import java.util.ArrayList;
 
@@ -18,7 +18,7 @@ public class CategoriesInnerLoader {
         try {
             categoryRepository = Application.getCategoryInnerRepository();
             CategoryInnersParser.loadCategoriesInner(1)
-                    .subscribeOn(Schedulers.newThread())
+                    .subscribeOn(APIFactory.getScheduler())
                     .subscribe(new Observer<ArrayList<CategoryInner>>() {
                         @Override
                         public void onCompleted() {
