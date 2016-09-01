@@ -78,7 +78,7 @@ public class SaleParser {
                         }
 
                         Sale sale = new Sale(saleId, title, subTitle, periodStart, periodEnd, coast, quantity, coastForQuantity, image, cityId, shopId, categoryId, categoryType);
-                        sale.setComments(getComments(page, cityId, sale.getId()));
+                        //sale.setComments(getComments(page, cityId, sale.getId()));
                         sale.setSameSales(getSameSales(page, cityId, saleId));
                         return Observable.just(sale);
                     } catch (Exception e){
