@@ -126,15 +126,14 @@ public class SaleParser {
             Matcher textMatcher = Pattern.compile("title='[.[^']]*'").matcher(sameResult);
             if (textMatcher.find()){
                 String textResult = textMatcher.group();
-                text = textResult.substring(7, textResult.length() - 1);
+                text = textResult.substring(7, textResult.length() - 1).replaceAll("\n", " ");
             } else{
                 ErrorManager.sendError("Mestoskidki: SaleSame text for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;
             }
             Matcher coastMatcher = Pattern.compile("[0-9\\.]* руб\\.").matcher(sameResult);
             if (coastMatcher.find()){
-                String coastResult = coastMatcher.group();
-                coast = coastResult;
+                coast = coastMatcher.group();
             } else{
                 ErrorManager.sendError("Mestoskidki: SaleSame coast for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;

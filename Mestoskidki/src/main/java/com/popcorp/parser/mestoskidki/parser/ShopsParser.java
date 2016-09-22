@@ -74,7 +74,7 @@ public class ShopsParser {
                         Matcher imageMatcher = Pattern.compile("src='[.[^']]*'").matcher(shopImageResult);
                         if (imageMatcher.find()) {
                             String imageResult = imageMatcher.group();
-                            String imageUrl = imageResult.substring(5, imageResult.length() - 1);
+                            String imageUrl = APIFactory.BASE_URL + imageResult.substring(5, imageResult.length() - 1);
                             for (Shop shop : result) {
                                 if (shop.getId() == id) {
                                     shop.setImage(imageUrl);

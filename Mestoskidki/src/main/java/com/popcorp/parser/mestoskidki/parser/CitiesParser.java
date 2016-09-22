@@ -61,6 +61,7 @@ public class CitiesParser {
             ErrorManager.sendError("Mestoskidki: Name for city not finded! City: " + cityResult);
             return null;
         }
+        url = url.substring(0, url.length() - 1);
         result = new City(id, name, url, 0);
         return result;
     }

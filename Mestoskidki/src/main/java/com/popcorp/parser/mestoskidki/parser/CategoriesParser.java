@@ -54,7 +54,7 @@ public class CategoriesParser {
                         Matcher imageMatcher = Pattern.compile("src='[.[^']]*'").matcher(categoryResult);
                         if (imageMatcher.find()) {
                             String imageResult = imageMatcher.group();
-                            image = imageResult.substring(5, imageResult.length() - 1);
+                            image = APIFactory.BASE_URL + imageResult.substring(5, imageResult.length() - 1);
                         } else {
                             ErrorManager.sendError("Mestoskidki: Image for category not finded! Category: " + categoryResult);
                             continue;

@@ -9,39 +9,48 @@ import org.springframework.scheduling.annotation.Scheduled;
 @EnableScheduling
 public class ScheduledTasks {
 
-    @Scheduled(fixedRate = 3600000, initialDelay = 25000)
-    public void clearOldSales() {
-        new SalesCleaner().clearOldSales();
-    }
+    private static final long SECOND = 1000;
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 5000)
+    private static final long MINUTE = 60 * SECOND;
+
+    private static final long HALF_HOUR = 30 * MINUTE;
+    private static final long HOUR = 60 * MINUTE;
+
+    private static final long DAY = 24 * HOUR;
+
+    @Scheduled(fixedRate = DAY, initialDelay = 5 * SECOND)
     public void loadCities() {
         new CitiesLoader().loadCities();
     }
 
-    @Scheduled(fixedRate = 600000, initialDelay = 1000)//10000
-    public void loadShops() {
-        new ShopsLoader().loadShops();
-    }
-
-    @Scheduled(fixedRate = 86400000, initialDelay = 15000)//86400000
+    @Scheduled(fixedRate = DAY, initialDelay = 10 * SECOND)
     public void loadCategories() {
         new CategoriesLoader().loadCategories();
     }
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 20000)
+    @Scheduled(fixedRate = DAY, initialDelay = 15 * SECOND)
     public void loadCategoriesInners() {
         new CategoriesInnerLoader().loadCategories();
     }
 
-    @Scheduled(fixedRate = 3600000, initialDelay = 10000)//30000
+    @Scheduled(fixedRate = 10 * MINUTE, initialDelay = 20 * SECOND)
+    public void loadShops() {
+        new ShopsLoader().loadShops();
+    }
+
+    @Scheduled(fixedRate = HOUR, initialDelay = 25 * SECOND)
+    public void clearOldSales() {
+        new SalesCleaner().clearOldSales();
+    }
+
+    @Scheduled(fixedRate = HOUR, initialDelay = 30 * SECOND)
     public void loadSales() {
         new SalesLoader().loadSales();
     }
 
-    @Scheduled(fixedRate = 1800000, initialDelay = 40000)
+    @Scheduled(fixedRate = HALF_HOUR, initialDelay = 40 * SECOND)
     public void sendErrors() {
-        for (Error error : Application.getErrorRepository().getAll()){
+        for (Error error : Application.getErrorRepository().getAll()) {
             ErrorManager.sendError(error.getSubject(), error.getBody());
         }
     }
