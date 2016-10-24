@@ -81,7 +81,7 @@ public class SaleParser {
                         //sale.setComments(getComments(page, cityId, sale.getId()));
                         sale.setSameSales(getSameSales(page, cityId, saleId));
                         return Observable.just(sale);
-                    } catch (Exception e){
+                    } catch (Exception e) {
                         ErrorManager.sendError(e.getMessage());
                         e.printStackTrace();
                     }
@@ -89,10 +89,10 @@ public class SaleParser {
                 });
     }
 
-    private String getImage(String page){
+    private String getImage(String page) {
         String result = "";
         Matcher imageLineMatcher = Pattern.compile("class='img_big[0-9]*' align='left' src='[.[^']]*'").matcher(page);
-        if (imageLineMatcher.find()){
+        if (imageLineMatcher.find()) {
             String imageLineResult = imageLineMatcher.group();
             Matcher imageMatcher = Pattern.compile("src='[.[^']]*'").matcher(imageLineResult);
             if (imageMatcher.find()) {
@@ -107,7 +107,7 @@ public class SaleParser {
         SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy", new Locale("ru"));
         ArrayList<SaleSame> result = new ArrayList<>();
         Matcher sameMatcher = Pattern.compile("<a href='view_sale\\.php\\?city=[0-9]*&id=[0-9]*' title='[.[^']]*' class='same_sales'>[.[^<]]*</a></p></td><td align='[a-z]*' width='[0-9]*' valign='[a-z]*'><p class='same_sales'>[0-9\\.]* руб\\.</p></td><td align='[a-z]*' width='[0-9]*' valign='[a-z]*'><p class='same_sales'>[.[^<]]*</p></td><td align='[a-z]*' width='[0-9]*' valign='[a-z]*'><p class='same_sales'>(с|c) [\\.0-9]*</p></td><td align='[a-z]*' width='[0-9]*' valign='[a-z]*'><p class='same_sales'>по [\\.0-9]*</p>").matcher(page);
-        while (sameMatcher.find()){
+        while (sameMatcher.find()) {
             String sameResult = sameMatcher.group();
             int id;
             String text;
@@ -116,50 +116,50 @@ public class SaleParser {
             String periodBegin;
             String periodEnd;
             Matcher idMatcher = Pattern.compile("&id=[0-9]*'").matcher(sameResult);
-            if (idMatcher.find()){
+            if (idMatcher.find()) {
                 String idResult = idMatcher.group();
                 id = Integer.valueOf(idResult.substring(4, idResult.length() - 1));
-            } else{
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleSame id for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;
             }
             Matcher textMatcher = Pattern.compile("title='[.[^']]*'").matcher(sameResult);
-            if (textMatcher.find()){
+            if (textMatcher.find()) {
                 String textResult = textMatcher.group();
-                text = textResult.substring(7, textResult.length() - 1).replaceAll("\n", " ");
-            } else{
+                text = textResult.substring(7, textResult.length() - 1).replaceAll("\n|'", " ");
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleSame text for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;
             }
             Matcher coastMatcher = Pattern.compile("[0-9\\.]* руб\\.").matcher(sameResult);
-            if (coastMatcher.find()){
+            if (coastMatcher.find()) {
                 coast = coastMatcher.group();
-            } else{
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleSame coast for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;
             }
             Matcher shopMatcher = Pattern.compile("<p class='same_sales'>[.[^<]]*</p>").matcher(sameResult);
-            if (shopMatcher.find()){
+            if (shopMatcher.find()) {
                 shopMatcher.find();//Первым находится цена, поэтому ищем следующий результат
                 String shopResult = shopMatcher.group();
-                shopName = shopResult.substring(22, shopResult.length() - 4);
-            } else{
+                shopName = shopResult.substring(22, shopResult.length() - 4).replaceAll("'", "");;
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleSame shop for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;
             }
             Matcher periodStartMatcher = Pattern.compile("(с|c) [\\.0-9]*</p>").matcher(sameResult);
-            if (periodStartMatcher.find()){
+            if (periodStartMatcher.find()) {
                 String periodStartResult = periodStartMatcher.group();
                 periodBegin = periodStartResult.substring(2, periodStartResult.length() - 4);
-            } else{
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleSame periodStart for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;
             }
             Matcher periodEndMatcher = Pattern.compile("по [\\.0-9]*</p>").matcher(sameResult);
-            if (periodEndMatcher.find()){
+            if (periodEndMatcher.find()) {
                 String perioEndResult = periodEndMatcher.group();
                 periodEnd = perioEndResult.substring(3, perioEndResult.length() - 4);
-            } else{
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleSame periodEnd for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", same: " + sameResult);
                 continue;
             }
@@ -171,7 +171,7 @@ public class SaleParser {
                 e.printStackTrace();
                 continue;
             }
-            if (end.getTimeInMillis() < today.getTimeInMillis()){
+            if (end.getTimeInMillis() < today.getTimeInMillis()) {
                 continue;
             }
             SaleSame saleSame = new SaleSame(saleId, cityId, id, text, coast, shopName, periodBegin, periodEnd);
@@ -184,38 +184,38 @@ public class SaleParser {
         SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm", new Locale("ru"));
         ArrayList<SaleComment> result = new ArrayList<>();
         Matcher commentMatcher = Pattern.compile("<p class='comment_add'><b>[.[^<]]*</b>(  для  [.[^<]]*</b>)? <br></p>[.[^<]]*<p class='comment_text'>[.[^<]]*</p><p class='comment_add'>[.0-9:[^<]]*</p>").matcher(page);
-        while (commentMatcher.find()){
+        while (commentMatcher.find()) {
             String author;
             String whom = "";
             String text;
             String dateTime;
             String commentResult = commentMatcher.group();
             Matcher authorMatcher = Pattern.compile("<b>[.[^<]]*</b>").matcher(commentResult);
-            if (authorMatcher.find()){
+            if (authorMatcher.find()) {
                 String authorResult = authorMatcher.group();
-                author = authorResult.substring(3, authorResult.length() - 4);
-            } else{
+                author = authorResult.substring(3, authorResult.length() - 4).replaceAll("'", "");
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleComment author for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", comment: " + commentResult);
                 continue;
             }
             Matcher whomMatcher = Pattern.compile("  для  [.[^<]]*</b>").matcher(commentResult);
-            if (whomMatcher.find()){
+            if (whomMatcher.find()) {
                 String whomResult = whomMatcher.group();
-                whom = whomResult.substring(7, whomResult.length() - 4);
+                whom = whomResult.substring(7, whomResult.length() - 4).replaceAll("'", "");
             }
             Matcher textMatcher = Pattern.compile("<p class='comment_text'>[.[^<]]*</p>").matcher(commentResult);
-            if (textMatcher.find()){
+            if (textMatcher.find()) {
                 String textResult = textMatcher.group();
-                text = textResult.substring(24, textResult.length() - 4);
-            } else{
+                text = textResult.substring(24, textResult.length() - 4).replaceAll("'", "");
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleComment text for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", comment: " + commentResult);
                 continue;
             }
             Matcher dateTimeMatcher = Pattern.compile("<p class='comment_add'>[.0-9:[^<]]*</p>").matcher(commentResult);
-            if (dateTimeMatcher.find()){
+            if (dateTimeMatcher.find()) {
                 String dateTimeResult = dateTimeMatcher.group();
-                dateTime = dateTimeResult.substring(23, dateTimeResult.length() -4);
-            } else{
+                dateTime = dateTimeResult.substring(23, dateTimeResult.length() - 4);
+            } else {
                 ErrorManager.sendError("Mestoskidki: SaleComment datetime for sale not finded! Id: " + saleId + ", cityId: " + cityId + ", comment: " + commentResult);
                 continue;
             }
@@ -238,7 +238,7 @@ public class SaleParser {
         Matcher titleMatcher = Pattern.compile("<p class='larger'><strong>[.[^<]]*<").matcher(page);
         if (titleMatcher.find()) {
             String titleResult = titleMatcher.group();
-            result = titleResult.substring(26, titleResult.length() - 1).trim();
+            result = titleResult.substring(26, titleResult.length() - 1).trim().replaceAll("'", "");
         }
         return result;
     }
@@ -251,7 +251,7 @@ public class SaleParser {
             Matcher subTitleMatcher = Pattern.compile("</strong>[^<]+<").matcher(subTitleStrokeResult);
             if (subTitleMatcher.find()) {
                 String subTitleResult = subTitleMatcher.group();
-                result = subTitleResult.substring(9, subTitleResult.length() - 1).trim();
+                result = subTitleResult.substring(9, subTitleResult.length() - 1).trim().replaceAll("'", "");
             }
         }
         return result;
